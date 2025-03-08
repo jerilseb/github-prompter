@@ -1,14 +1,16 @@
-# GitHub Repository Tree Viewer
+# GitHub Prompter
 
-A Chrome extension that allows you to quickly clone any GitHub repository and view its file structure in a tree format.
+A Chrome extension that helps you copy content from GitHub repositories in a format optimized for Large Language Models (LLMs). Perfect for developers who want to efficiently reference code in their LLM prompts.
 
 ## Features
 
-- Enter any GitHub repository URL and generate a tree view
+- Copy files in LLM-friendly format with proper context and structure
+- Smart formatting that preserves code hierarchy and relationships
 - Auto-detects repository URLs from active tabs
-- Displays file structure similar to the Unix `tree` command
-- Copy tree structure to clipboard
-- Saves the last viewed repository tree
+- Customizable output format for different LLM preferences
+- Clean, modern interface with tree visualization
+- Save frequently accessed repositories
+- Dark/light theme support
 
 ## Installation
 
@@ -20,40 +22,53 @@ A Chrome extension that allows you to quickly clone any GitHub repository and vi
 ## How to Use
 
 1. Click on the extension icon in your Chrome toolbar
-2. Enter a GitHub repository URL (or it will auto-fill if you're already on a GitHub repo page)
-3. Click "Clone & View Tree"
-4. Wait for the extension to download and process the repository
-5. View the tree structure in the popup
+2. The extension will automatically detect if you're on a GitHub repository page
+3. Browse the repository structure and select files
+4. Copy the content in LLM-optimized format
+5. Paste directly into your favorite LLM interface
+6. Use the settings page to customize output format
 
 ## Project Structure
 
 ```
-GitHub-Repository-Tree-Viewer/
+GitHub-Prompter/
 ├── manifest.json        # Extension configuration
-├── background.js        # Background script for download handling
-├── popup.html           # Popup UI structure
-├── popup.js             # Popup functionality
-├── images/              # Extension icons
-│   ├── icon16.png
-│   ├── icon48.png
-│   └── icon128.png
-└── README.md            # This file
+├── popup.html          # Main popup interface
+├── popup.js           # Main extension logic
+├── popup.css         # Main styles
+├── settings.html     # Settings page
+├── settings.js      # Settings functionality
+├── tree.js         # Tree view implementation
+├── tree.css       # Tree view styles
+├── githubApi.js   # GitHub API interactions
+├── ajax.js       # AJAX utility functions
+├── styles.css   # Global styles
+├── images/      # Extension icons
+│   ├── 32.png
+│   ├── 48.png
+│   ├── 64.png
+│   ├── 128.png
+│   └── 256.png
+└── README.md    # Documentation
 ```
 
 ## Requirements
 
 - Chrome browser
-- Internet connection to download repository files
+- Internet connection to access GitHub repositories
 
-## Limitations
+## Permissions
 
-- Currently supports public repositories only
-- Large repositories may take longer to process
-- The extension requires permissions to download files and access GitHub
+This extension requires minimal permissions:
+- Access to active tab for detecting GitHub URLs
+- Storage permission for saving settings
+- Access to GitHub API for repository data
 
 ## Privacy
 
-This extension only requests the minimum permissions needed:
-- Access to GitHub URLs to fetch repository data
-- Download permission to get repository ZIP files
-- Storage permission to save the last viewed repository tree
+The extension only accesses:
+- GitHub API for repository data
+- Chrome storage for saving your preferences
+- Active tab URL for GitHub repository detection
+
+No personal data is collected or stored beyond your extension settings.
