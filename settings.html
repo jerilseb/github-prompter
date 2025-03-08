@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GitHub Prompter Settings</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="settings-container">
+    <h2>Github Prompter Settings</h2>
+    <div class="form-group">
+      <label for="github-token">GitHub Personal Access Token</label>
+      <input type="password" id="github-token" class="form-control" placeholder="Enter your GitHub token">
+      <small class="form-text">Your token will be securely stored in Chrome storage.</small>
+    </div>
+    <div class="button-group">
+      <button id="save-token" class="btn btn-primary">Save Token</button>
+      <button id="remove-token" class="btn btn-danger">Remove Token</button>
+    </div>
+    <div id="status-message" class="status-message"></div>
+  </div>
+  <script src="settings.js"></script>
+</body>
+</html> 

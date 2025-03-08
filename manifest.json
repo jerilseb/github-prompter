@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "GitHub Prompter",
+  "version": "1.0",
+  "description": "Copy files from GitHub repositories",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "https://api.github.com/*"
+  ],
+  "browser_action": {
+    "default_popup": "popup.html"
+  },
+  "options_page": "settings.html",
+  "icons": {
+    "32": "images/32.png",
+    "48": "images/48.png",
+    "64": "images/64.png",
+    "128": "images/128.png",
+    "256": "images/256.png"
+  }
+}
