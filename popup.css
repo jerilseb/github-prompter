@@ -10,6 +10,77 @@ body {
   position: relative;
 }
 
+html, body {
+  height: 100%; /* Or the fixed popup height e.g., 500px */
+  overflow: hidden;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+   /* Set a typical max height for popups */
+  max-height: 600px;
+  min-height: 480px; /* Ensure minimum usable space */
+  width: 400px; /* Typical popup width */
+}
+
+.header {
+  /* Header takes its natural height */
+  flex-shrink: 0;
+}
+
+.file-actions {
+  /* Actions bar takes its natural height, fixed below header */
+   /* No longer needs sticky if using flex */
+  flex-shrink: 0;
+  background-color: white; /* Ensure background */
+  z-index: 10;
+  padding: 8px 10px; /* Reduced padding a bit */
+  border-bottom: 1px solid #e1e4e8;
+  display: flex; /* Use flex for internal alignment */
+  justify-content: flex-end; /* Align button to the right */
+  align-items: center;
+}
+
+#tree-container {
+  /* Tree container takes remaining space and scrolls */
+  flex-grow: 1;
+  overflow-y: auto;
+  /* Add some padding if needed */
+   padding: 5px;
+}
+
+/* Adjust button styles if needed */
+#copy-files-btn {
+    margin-left: auto; /* Push button to the right */
+}
+
+/* Hide clone section elements that are removed */
+.clone-section {
+    display: none;
+}
+
+ /* Ensure loading/progress indicators are centered */
+#loading-indicator, .fetch-progress, .output-container {
+  flex-grow: 1; /* Allow these to fill space if tree isn't shown */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+}
+ .fetch-progress {
+   /* Make fetch progress overlay correctly if needed, or ensure it replaces tree */
+    display: none; /* Initially hidden */
+ }
+
+ .output-container pre {
+    max-height: 200px; /* Limit height of code blocks */
+    overflow: auto;
+    width: 100%;
+    text-align: left;
+ }
+
+
 /* Ensure checkboxes are visible */
 input[type="checkbox"] {
   opacity: 1 !important;

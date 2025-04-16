@@ -3,88 +3,78 @@ import { fetchRepoInfo, fetchBranchInfo, fetchRepoTree, fetchFileContent } from 
 
 document.addEventListener('DOMContentLoaded', function() {
   // Get UI elements
-  const repoInput = document.getElementById('repo-input');
-  const cloneBtn = document.getElementById('clone-btn');
   const treeContainer = document.getElementById('tree-container');
   const loadingIndicator = document.getElementById('loading-indicator');
   const settingsBtn = document.getElementById('settings-btn');
-  
+  const repoInfoDiv = document.getElementById('repo-info');
+  const fileActionsDiv = document.getElementById('file-actions');
+  // Removed selectAllCheckbox and selectionInfoSpan references
+  const copyFilesBtn = document.getElementById('copy-files-btn');
+  const fetchProgressDiv = document.getElementById('fetch-progress');
+
+  let currentTree = null; // Store tree instance
+  let currentRepoData = null; // Store current repo { owner, name, branch }
+
   // Add settings button click handler
   settingsBtn.addEventListener('click', function() {
     chrome.runtime.openOptionsPage();
   });
-  
-  // Create button container
-  const buttonContainer = document.createElement('div');
-  buttonContainer.className = 'button-container';
-  treeContainer.after(buttonContainer);
-  
-  // Create and add print button
-  const printBtn = document.createElement('button');
-  printBtn.id = 'print-btn';
-  printBtn.textContent = 'Copy Files to Clipboard';
-  printBtn.style.display = 'none';
-  printBtn.className = 'btn btn-primary';
-  buttonContainer.appendChild(printBtn);
-  
-  let currentTree = null; // Store tree instance
-  
-  // Auto-fill repository URL if on GitHub
-  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-    const url = tabs[0].url;
-    if (url.match(/https:\/\/github\.com\/[^\/]+\/[^\/]+/)) {
-      repoInput.value = url;
-    }
-  });
-  
-  // Handle the Clone button click
-  cloneBtn.addEventListener('click', async function() {
-    const repoUrl = repoInput.value.trim();
-    
-    // Validate the input
-    if (!repoUrl || !repoUrl.match(/https:\/\/github\.com\/[^\/]+\/[^\/]+/)) {
+
+  // Function to fetch and display the repository tree
+  async function loadRepository(url) {
+    const match = url.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\/tree\/([^\/]+))?/);
+    if (!match) {
       treeContainer.innerHTML = `
         <div class="output-container">
           <div class="error-message">
-            Please enter a valid GitHub repository URL
+            Not a valid GitHub repository URL. Please navigate to a repository page (e.g., https://github.com/owner/repo).
           </div>
         </div>
       `;
+      loadingIndicator.style.display = 'none';
+      fileActionsDiv.style.display = 'none'; // Hide actions bar on error
       return;
     }
-    
+
     // Extract repository information
-    const urlParts = repoUrl.replace('https://github.com/', '').split('/');
-    const owner = urlParts[0];
-    const repo = urlParts[1];
-    // Use specified branch from URL if available, otherwise we'll fetch default branch
-    const specifiedBranch = urlParts.length > 3 && urlParts[2] === 'tree' ? urlParts[3] : null;
-    
+    const owner = match[1];
+    const repo = match[2];
+    const specifiedBranch = match[3]; // Might be undefined
+
     // Show loading indicator
+    treeContainer.innerHTML = ''; // Clear previous content
     treeContainer.style.display = 'none';
-    loadingIndicator.style.display = 'block';
-    
+    fileActionsDiv.style.display = 'none'; // Hide actions while loading
+    fetchProgressDiv.style.display = 'none'; // Ensure progress is hidden
+    loadingIndicator.style.display = 'flex'; // Use flex for centering
+    repoInfoDiv.textContent = `Loading ${owner}/${repo}...`;
+
     try {
       // First, get the repository info to get the default branch
       const repoData = await fetchRepoInfo(owner, repo);
       // Use specified branch from URL or fall back to default branch
       const branch = specifiedBranch || repoData.default_branch;
 
+      currentRepoData = { owner, name: repo, branch }; // Store for later use
+
       // Get the commit SHA for the branch
       const branchData = await fetchBranchInfo(owner, repo, branch);
       const commitSha = branchData.commit.sha;
-      
+
       // Then get the tree with recursive option
       const treeData = await fetchRepoTree(owner, repo, commitSha);
-      
+
       // Convert to tree format and display
-      showTreeView(processGitTree(treeData.tree), { owner, name: repo, branch });
-      
+      showTreeView(processGitTree(treeData.tree), currentRepoData);
+      repoInfoDiv.textContent = `${owner}/${repo} (${branch})`;
+
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error fetching repository:', error);
       let errorMessage = error.message;
       if (error.message.includes('403')) {
-        errorMessage = 'API rate limit exceeded. To increase the limit, add a GitHub token in the Settings (⚙️).';
+        errorMessage = 'API rate limit exceeded or private repository access denied. To increase the limit for public repositories or access private ones, add a GitHub token in the Settings (⚙️).';
+      } else if (error.message.includes('404')) {
+        errorMessage = 'Repository not found. Check the URL or ensure you have access.';
       }
       treeContainer.innerHTML = `
         <div class="output-container">
@@ -93,12 +83,35 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
       `;
+       treeContainer.style.display = 'flex'; // Show error message container
+      repoInfoDiv.textContent = 'Error';
+      fileActionsDiv.style.display = 'none'; // Keep actions hidden on error
     } finally {
       loadingIndicator.style.display = 'none';
-      treeContainer.style.display = 'block';
+      // Don't set treeContainer display here, showTreeView or error handler does it
+    }
+  }
+
+  // Check current tab URL and automatically load repository
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    if (tabs && tabs[0] && tabs[0].url) {
+        const url = tabs[0].url;
+        loadRepository(url); // Automatically try to load repo from current tab
+    } else {
+        treeContainer.innerHTML = `
+          <div class="output-container">
+            <div class="error-message">
+              Could not get current tab URL. Ensure the extension has permission to access the current page.
+            </div>
+          </div>
+        `;
+        treeContainer.style.display = 'flex'; // Show error message container
+        loadingIndicator.style.display = 'none';
+        fileActionsDiv.style.display = 'none'; // Hide actions bar
+        repoInfoDiv.textContent = 'Error';
     }
   });
-  
+
   // Process Git Tree data into hierarchical structure
   function processGitTree(items) {
     if (!Array.isArray(items)) {
@@ -107,61 +120,88 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const root = {};
-    
-    // Sort items to ensure directories come before files
+
+    // Sort items to ensure directories come before files and alphabetically
     items.sort((a, b) => {
-      if (a.type === 'tree' && b.type === 'blob') return -1;
-      if (a.type === 'blob' && b.type === 'tree') return 1;
-      return a.path.localeCompare(b.path);
+        const aParts = a.path.split('/');
+        const bParts = b.path.split('/');
+
+        // Compare parent directories first
+        const minLength = Math.min(aParts.length, bParts.length);
+        for (let i = 0; i < minLength - 1; i++) {
+            if (aParts[i] !== bParts[i]) {
+                return aParts[i].localeCompare(bParts[i]);
+            }
+        }
+
+        // Prioritize directories ('tree') over files ('blob') at the same level
+        if (a.type === 'tree' && b.type === 'blob') {
+             // Check if they are in the same directory level before prioritizing type
+             if (aParts.length === bParts.length) return -1;
+        }
+        if (a.type === 'blob' && b.type === 'tree') {
+             if (aParts.length === bParts.length) return 1;
+        }
+
+        // Default to path comparison
+        return a.path.localeCompare(b.path);
     });
-    
+
+
     // Process each item into the tree structure
     items.forEach(item => {
-      if (!item.path) {
-        console.warn('Skipping item without path:', item);
-        return;
-      }
-
-      const parts = item.path.split('/');
-      let current = root;
-      
-      // Build the path one level at a time
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        const isLastPart = i === parts.length - 1;
-        const currentPath = parts.slice(0, i + 1).join('/');
-        
-        if (isLastPart) {
-          // It's a file or empty directory
-          current[part] = {
-            id: currentPath,
-            text: part,
-            type: item.type === 'tree' ? 'directory' : 'file',
-            children: {}
-          };
-        } else {
-          // It's a directory
-          if (!current[part]) {
-            current[part] = {
-              id: currentPath,
-              text: part,
-              type: 'directory',
-              children: {}
-            };
-          }
-          current = current[part].children;
+        if (!item.path) {
+            console.warn('Skipping item without path:', item);
+            return;
         }
-      }
+
+        const parts = item.path.split('/');
+        let current = root;
+
+        // Build the path one level at a time
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            const isLastPart = i === parts.length - 1;
+            const currentPath = parts.slice(0, i + 1).join('/');
+
+            if (!current[part]) {
+                 current[part] = {
+                    id: currentPath, // Use full path as ID
+                    text: part,
+                    type: 'directory', // Assume directory initially
+                    children: {}
+                };
+            }
+
+            if (isLastPart) {
+                // If it's the last part, set the correct type
+                current[part].type = item.type === 'tree' ? 'directory' : 'file';
+                // If it's a file, it shouldn't have children object
+                if (current[part].type === 'file') {
+                    delete current[part].children;
+                }
+            }
+
+            // Move to the next level if not the last part
+             if (!isLastPart) {
+                // Ensure children object exists if we are traversing deeper
+                if (!current[part].children) {
+                     current[part].children = {};
+                }
+                current = current[part].children;
+            }
+        }
     });
-    
+
     // Convert the tree structure to Tree.js format
     function convertToTreeFormat(node) {
-      if (!node) return [];
-      
-      return Object.entries(node).map(([key, item]) => ({
+      if (!node || typeof node !== 'object') return [];
+
+      return Object.values(node).map(item => ({
         id: item.id,
         text: item.text,
-        children: item.children ? convertToTreeFormat(item.children) : [],
+        // Ensure children is an empty array for files, otherwise convert recursively
+        children: item.type === 'directory' && item.children ? convertToTreeFormat(item.children) : [],
         attributes: { type: item.type }
       })).sort((a, b) => {
         // Sort directories before files, then alphabetically
@@ -170,30 +210,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return a.text.localeCompare(b.text);
       });
     }
-    
+
     return convertToTreeFormat(root);
   }
-  
+
+
   // Display the tree view
   function showTreeView(treeData, repository) {
-    // Clear existing tree container
-    treeContainer.innerHTML = '<div id="repo-tree"></div>';
-    
-    // Create root node
-    const rootNode = {
-      id: 'root',
-      text: `${repository.owner}/${repository.name} (${repository.branch})`,
-      children: treeData,
-      attributes: {
-        type: 'directory'
-      }
-    };
-    
+    treeContainer.innerHTML = '<div id="repo-tree"></div>'; // Prepare container
+    treeContainer.style.display = 'block'; // Ensure container is visible
+    fileActionsDiv.style.display = 'flex'; // Show file actions bar
+
+    const repoTreeElement = document.getElementById('repo-tree');
+    if (!repoTreeElement) {
+        console.error("Element #repo-tree not found");
+        treeContainer.innerHTML = '<div class="output-container"><div class="error-message">Failed to create tree view element.</div></div>';
+        treeContainer.style.display = 'flex'; // Show error message container
+        fileActionsDiv.style.display = 'none';
+        return;
+    }
+
     // Initialize tree
     try {
-      const tree = new Tree('#repo-tree', {
-        data: [rootNode],
-        closeDepth: 1,
+      currentTree = new Tree('#repo-tree', {
+        data: treeData, // Pass the processed data directly
+        closeDepth: 0, // Start with top-level items expanded
         loaded: function() {
           // Add custom classes to nodes
           const nodes = document.querySelectorAll('#repo-tree .tree-node');
@@ -203,117 +244,17 @@ document.addEventListener('DOMContentLoaded', function() {
               node.classList.add(nodeData.attributes.type);
             }
           });
-          
-          // Show print button after tree is loaded
-          printBtn.style.display = 'block';
+          // Initial update of selection info
+          updateCopyButton(this.selectedNodes);
         },
         onChange: function() {
-          // Update selected files count in print button
-          const selectedCount = this.selectedNodes.filter(node => 
-            node.attributes && node.attributes.type === 'file'
-          ).length;
-          printBtn.textContent = `Copy ${selectedCount} Files to Clipboard`;
+          // Update selected files count and button state
+          updateCopyButton(this.selectedNodes);
         }
       });
 
-      // Store tree instance
-      currentTree = tree;
-      
-      // Handle print button click
-      printBtn.onclick = async function() {
-        if (!currentTree) return;
-        
-        // Get selected file nodes
-        const selectedFiles = currentTree.selectedNodes.filter(node => 
-          node.attributes && node.attributes.type === 'file'
-        );
-        
-        if (selectedFiles.length === 0) {
-          treeContainer.innerHTML = `
-            <div class="output-container">
-              <div class="error-message">
-                Please select at least one file to copy
-              </div>
-              <div class="button-container">
-                <button id="back-btn" class="btn btn-secondary">Back to Tree View</button>
-              </div>
-            </div>
-          `;
-          
-          // Handle back button
-          document.getElementById('back-btn').onclick = function() {
-            showTreeView(treeData, repository);
-            printBtn.style.display = 'block';
-          };
-          return;
-        }
+      // Removed Select All checkbox handler
 
-        // Show loading state
-        treeContainer.innerHTML = `
-          <div class="output-container">
-            <div id="loading-indicator">Fetching file contents...</div>
-          </div>
-        `;
-        printBtn.style.display = 'none';
-
-        try {
-          // Fetch contents for each file
-          const fileContents = await Promise.all(selectedFiles.map(async (node) => {
-            const content = await fetchFileContent(repository.owner, repository.name, node.id, repository.branch);
-            return `=============\n${node.id}\n\`\`\`\n${content}\n\`\`\``;
-          }));
-
-          // Combine all contents
-          const combinedContent = fileContents.join('\n\n');
-
-          // Copy to clipboard
-          await navigator.clipboard.writeText(combinedContent);
-
-          // Show only list of copied files
-          const fileList = selectedFiles.map(node => node.id).join('\n');
-          treeContainer.innerHTML = `
-            <div class="output-container">
-              <div class="success-message">Successfully copied these files to clipboard:</div>
-              <pre class="selected-paths">${fileList}</pre>
-              <div class="button-container">
-                <button id="back-btn" class="btn btn-secondary">Back to Tree View</button>
-              </div>
-            </div>
-          `;
-
-          // Show success notification
-          const notification = document.createElement('div');
-          notification.className = 'success-notification';
-          notification.textContent = 'Copied to clipboard!';
-          document.body.appendChild(notification);
-          setTimeout(() => notification.remove(), 3000);
-
-        } catch (error) {
-          console.error('Error fetching files:', error);
-          let errorMessage = error.message;
-          if (error.message.includes('403')) {
-            errorMessage = 'API rate limit exceeded. To increase the limit, add a GitHub token in the Settings (⚙️).';
-          }
-          treeContainer.innerHTML = `
-            <div class="output-container">
-              <div class="error-message">
-                Error fetching file contents: ${errorMessage}
-              </div>
-              <div class="button-container">
-                <button id="back-btn" class="btn btn-secondary">Back to Tree View</button>
-              </div>
-            </div>
-          `;
-        }
-
-        // Handle back button
-        document.getElementById('back-btn').onclick = function() {
-          // Restore tree view
-          showTreeView(treeData, repository);
-          printBtn.style.display = 'block';
-        };
-      };
-      
     } catch (error) {
       console.error('Error initializing tree:', error);
       treeContainer.innerHTML = `
@@ -323,7 +264,107 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
       `;
-      printBtn.style.display = 'none';
+       treeContainer.style.display = 'flex'; // Show error message container
+       fileActionsDiv.style.display = 'none';
     }
   }
+
+    // Update copy button text and state
+    function updateCopyButton(selectedNodes) {
+        if (!currentTree) return;
+        const selectedFileNodes = selectedNodes.filter(node =>
+            node.attributes && node.attributes.type === 'file'
+        );
+        const count = selectedFileNodes.length;
+        // Update button text
+        copyFilesBtn.textContent = `Copy ${count} File${count !== 1 ? 's' : ''}`;
+        // Enable/disable button
+        copyFilesBtn.disabled = count === 0;
+
+        // Removed Select All checkbox logic
+    }
+
+
+  // Handle copy files button click
+  copyFilesBtn.onclick = async function() {
+    if (!currentTree || !currentRepoData) return;
+
+    // Get selected file nodes
+    const selectedFiles = currentTree.selectedNodes.filter(node =>
+      node.attributes && node.attributes.type === 'file'
+    );
+
+    if (selectedFiles.length === 0) {
+        // This state shouldn't be reachable if button is disabled correctly
+        return;
+    }
+
+    // Show fetching progress state
+    fileActionsDiv.style.display = 'none'; // Hide actions
+    treeContainer.style.display = 'none'; // Hide tree
+    fetchProgressDiv.style.display = 'flex'; // Show progress indicator
+    fetchProgressDiv.querySelector('.spinner').style.display = ''; // Ensure spinner is visible
+    const progressText = document.getElementById('fetch-progress-text');
+    progressText.textContent = `Fetching ${selectedFiles.length} file contents...`;
+    // Clear any previous buttons in progress div
+    const oldBackButton = fetchProgressDiv.querySelector('button');
+    if (oldBackButton) oldBackButton.remove();
+
+
+    try {
+      // Fetch contents for each file
+      const fileContents = await Promise.all(selectedFiles.map(async (node) => {
+        // Ensure node.id contains the full path needed for the API call
+        const content = await fetchFileContent(currentRepoData.owner, currentRepoData.name, node.id, currentRepoData.branch);
+        // Use a clear separator and indicate the file path
+        return `----- File: ${node.id} -----\n${content}`;
+      }));
+
+      // Combine all contents with double newline for better separation
+      const combinedContent = fileContents.join('\n\n');
+
+      // Copy to clipboard
+      await navigator.clipboard.writeText(combinedContent);
+
+      // Show success feedback
+      progressText.textContent = `Successfully copied ${selectedFiles.length} files to clipboard!`;
+      fetchProgressDiv.querySelector('.spinner').style.display = 'none'; // Hide spinner on success
+
+       // Restore view after a delay
+       setTimeout(() => {
+           fetchProgressDiv.style.display = 'none'; // Hide progress indicator
+           treeContainer.style.display = 'block'; // Restore tree view
+           fileActionsDiv.style.display = 'flex'; // Restore actions
+           // State (selection) is preserved
+       }, 2000); // Show success message for 2 seconds
+
+
+    } catch (error) {
+        console.error('Error fetching files:', error);
+        fetchProgressDiv.querySelector('.spinner').style.display = 'none'; // Hide spinner on error
+        let errorMessage = error.message;
+        if (error.message.includes('403')) {
+            errorMessage = 'API rate limit exceeded or access denied. Add/check your GitHub token in Settings (⚙️).';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Network error or issue fetching file content.';
+        } else {
+            errorMessage = `Error fetching file content: ${errorMessage}`;
+        }
+        progressText.textContent = errorMessage; // Display error message
+
+        // Add a button to dismiss the error and go back
+         const backButton = document.createElement('button');
+         backButton.textContent = 'Back to Tree';
+         backButton.className = 'btn btn-secondary';
+         backButton.style.marginTop = '10px';
+         backButton.onclick = () => {
+             fetchProgressDiv.style.display = 'none';
+             treeContainer.style.display = 'block';
+             fileActionsDiv.style.display = 'flex';
+             backButton.remove(); // Clean up button
+         };
+         fetchProgressDiv.appendChild(backButton);
+    }
+  };
+
 });
