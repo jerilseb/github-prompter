@@ -263,8 +263,8 @@ button.primary:hover {
 
 .fetch-progress .spinner {
   margin-bottom: 12px;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-width: 4px;
   border-color: #b3d3fa #e3eaf5 #e3eaf5 #e3eaf5;
 }
