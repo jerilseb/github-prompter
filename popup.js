@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
     fileActionsDiv.style.display = 'none'; // Hide actions while loading
     fetchProgressDiv.style.display = 'none'; // Ensure progress is hidden
     loadingIndicator.style.display = 'flex'; // Use flex for centering
-    repoInfoDiv.textContent = `Loading ${owner}/${repo}...`;
+    repoInfoDiv.textContent = `${owner}/${repo}`;
 
     try {
       // First, get the repository info to get the default branch
