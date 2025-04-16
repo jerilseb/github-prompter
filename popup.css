@@ -288,11 +288,10 @@ button:hover {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: linear-gradient(135deg, #fafdff 80%, #e3f0ff 100%);
   padding: 32px 40px 28px 40px;
-  border-radius: 18px;
-  box-shadow: 0 6px 32px 0 rgba(30, 60, 120, 0.13), 0 1.5px 6px 0 rgba(30, 60, 120, 0.07);
-  border: 1.5px solid #e3eaf5;
+  /* border-radius: 18px; */
+  /* box-shadow: 0 6px 32px 0 rgba(30, 60, 120, 0.13), 0 1.5px 6px 0 rgba(30, 60, 120, 0.07); */
+  /* border: 1.5px solid #e3eaf5; */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -304,7 +303,7 @@ button:hover {
 }
 
 .fetch-progress .spinner {
-  margin-bottom: 18px;
+  margin-bottom: 12px;
   width: 32px;
   height: 32px;
   border-width: 4px;
@@ -312,7 +311,7 @@ button:hover {
 }
 
 .fetch-progress-text {
-  font-size: 17px;
+  font-size: 14px;
   color: #1a2a3a;
   text-align: center;
   max-width: 95%;
