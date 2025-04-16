@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Ensure node.id contains the full path needed for the API call
         const content = await fetchFileContent(currentRepoData.owner, currentRepoData.name, node.id, currentRepoData.branch);
         // Use a clear separator and indicate the file path
-        return `----- File: ${node.id} -----\n${content}`;
+        return `## File: ${node.id}\n\`\`\`\n${content}\n\`\`\``;
       }));
 
       // Combine all contents with double newline for better separation
