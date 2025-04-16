@@ -88,7 +88,7 @@ h2 {
 
 /* Settings specific styles */
 .settings-container {
-  width: 400px;
+  width: 500px;
   max-width: 90%;
   background-color: #1e293b;
   padding: 24px;
@@ -115,17 +115,17 @@ label {
 .button-group {
   display: flex;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 30px;
+  justify-content: center
 }
 
 .status-message {
-  margin-top: 20px;
+  margin-top: 24px;
   padding: 12px;
   border-radius: 8px;
   text-align: center;
   font-size: 14px;
   font-weight: 500;
-  opacity: 0;
   transform: translateY(-10px);
   transition: all 0.3s ease;
 }

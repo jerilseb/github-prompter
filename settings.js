@@ -3,11 +3,20 @@ document.addEventListener('DOMContentLoaded', function() {
   const saveButton = document.getElementById('save-token');
   const removeButton = document.getElementById('remove-token');
   const statusMessage = document.getElementById('status-message');
+  const patInstructions = document.getElementById('pat-instructions');
+
+  // Function to show/hide PAT instructions
+  function toggleInstructions(show) {
+    patInstructions.style.display = show ? 'block' : 'none';
+  }
 
   // Load existing token if any
   chrome.storage.sync.get(['githubToken'], function(result) {
     if (result.githubToken) {
       tokenInput.value = result.githubToken;
+      toggleInstructions(false);
+    } else {
+      toggleInstructions(true);
     }
   });
 
@@ -22,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     chrome.storage.sync.set({ githubToken: token }, function() {
       showStatus('Token saved successfully!', 'success');
+      toggleInstructions(false);
     });
   });
 
@@ -30,6 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.storage.sync.remove('githubToken', function() {
       tokenInput.value = '';
       showStatus('Token removed successfully!', 'success');
+      toggleInstructions(true);
     });
   });
 
