@@ -9,7 +9,7 @@ body {
   flex-direction: column;
   max-height: 600px;
   min-height: 480px;
-  width: 400px; 
+  width: 400px;
 }
 
 html {
@@ -28,14 +28,15 @@ html {
 }
 
 .file-actions {
-  flex-shrink: 0;
-  background-color: white;
   z-index: 10;
-  padding: 8px 10px;
   border-bottom: 1px solid #e1e4e8;
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  padding: 8px;
+  border-top: 1px solid #e1e4e8;
+  background: #f6f8fa;
+  flex-shrink: 0;
 }
 
 #tree-container {
@@ -45,14 +46,16 @@ html {
 }
 
 #copy-files-btn {
-    margin-left: auto;
+  margin-left: auto;
 }
 
 .clone-section {
-    display: none;
+  display: none;
 }
 
-#loading-indicator, .fetch-progress, .output-container {
+#loading-indicator,
+.fetch-progress,
+.output-container {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -61,30 +64,16 @@ html {
   text-align: center;
   padding: 20px;
 }
- .fetch-progress {
-    display: none;
- }
 
- .output-container pre {
-    max-height: 200px;
-    overflow: auto;
-    width: 100%;
-    text-align: left;
- }
+.fetch-progress {
+  display: none;
+}
 
-input[type="checkbox"] {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  position: static !important;
-  margin-right: 5px;
-  vertical-align: middle;
-  width: 16px !important;
-  height: 16px !important;
-  appearance: auto !important;
-  -webkit-appearance: checkbox !important;
-  display: inline-block !important;
-  visibility: visible !important;
-  z-index: 999 !important;
+.output-container pre {
+  max-height: 200px;
+  overflow: auto;
+  width: 100%;
+  text-align: left;
 }
 
 label {
@@ -140,13 +129,15 @@ button:hover {
   width: 100%;
 }
 
-.btn-primary, button.primary {
+.btn-primary,
+button.primary {
   color: #ffffff;
   background-color: #2ea44f;
   border-color: rgba(27, 31, 35, 0.15);
 }
 
-.btn-primary:hover, button.primary:hover {
+.btn-primary:hover,
+button.primary:hover {
   background-color: #2c974b;
 }
 
@@ -156,33 +147,6 @@ button:hover {
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 12px;
   line-height: 1.5;
-}
-
-.tree-container .tree-node {
-  padding: 2px 0;
-}
-
-.tree-container .tree-node-inner {
-  padding: 2px 4px;
-  border-radius: 3px;
-}
-
-.tree-container .tree-node-inner:hover {
-  background-color: #f6f8fa;
-}
-
-.tree-container .tree-node[data-type="directory"] > .tree-node-inner {
-  color: #0366d6;
-  font-weight: bold;
-}
-
-.tree-container .tree-node[data-type="file"] > .tree-node-inner {
-  color: #24292e;
-}
-
-.tree-container .tree-node-checkbox {
-  margin-right: 5px;
-  vertical-align: middle;
 }
 
 .empty-state {
@@ -232,11 +196,17 @@ button:hover {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-.file-icon, .dir-icon {
+.file-icon,
+.dir-icon {
   display: inline-block;
   width: 16px;
   height: 16px;
@@ -263,13 +233,6 @@ button:hover {
 
 .file-name {
   color: #24292e;
-}
-
-.file-actions {
-  padding: 8px;
-  border-top: 1px solid #e1e4e8;
-  background: #f6f8fa;
-  flex-shrink: 0;
 }
 
 .selection-controls {
@@ -475,4 +438,4 @@ button:hover {
 .tooltip {
   font-size: 11px;
   color: #6a737d;
-} 
+}
