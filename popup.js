@@ -1,14 +1,11 @@
-// popup.js - Simplified GitHub repository tree viewer
 import { fetchRepoInfo, fetchBranchInfo, fetchRepoTree, fetchFileContent } from './githubApi.js';
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Get UI elements
   const treeContainer = document.getElementById('tree-container');
   const loadingIndicator = document.getElementById('loading-indicator');
   const settingsBtn = document.getElementById('settings-btn');
   const repoInfoDiv = document.getElementById('repo-info');
   const fileActionsDiv = document.getElementById('file-actions');
-  // Removed selectAllCheckbox and selectionInfoSpan references
   const copyFilesBtn = document.getElementById('copy-files-btn');
   const fetchProgressDiv = document.getElementById('fetch-progress');
 
