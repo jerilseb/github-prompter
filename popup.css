@@ -2,67 +2,58 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   padding: 0;
   position: relative;
-  height: 100%; /* Or the fixed popup height e.g., 500px */
+  height: 100%;
   overflow: hidden;
   margin: 0;
   display: flex;
   flex-direction: column;
   max-height: 600px;
-  min-height: 480px; /* Ensure minimum usable space */
+  min-height: 480px;
   width: 400px; 
 }
 
 html {
-  height: 100%; /* Or the fixed popup height e.g., 500px */
+  height: 100%;
   overflow: hidden;
   margin: 0;
   display: flex;
   flex-direction: column;
-   /* Set a typical max height for popups */
   max-height: 600px;
-  min-height: 480px; /* Ensure minimum usable space */
-  width: 400px; /* Typical popup width */
+  min-height: 480px;
+  width: 400px;
 }
 
 .header {
-  /* Header takes its natural height */
   flex-shrink: 0;
 }
 
 .file-actions {
-  /* Actions bar takes its natural height, fixed below header */
-   /* No longer needs sticky if using flex */
   flex-shrink: 0;
-  background-color: white; /* Ensure background */
+  background-color: white;
   z-index: 10;
-  padding: 8px 10px; /* Reduced padding a bit */
+  padding: 8px 10px;
   border-bottom: 1px solid #e1e4e8;
-  display: flex; /* Use flex for internal alignment */
-  justify-content: flex-end; /* Align button to the right */
+  display: flex;
+  justify-content: flex-end;
   align-items: center;
 }
 
 #tree-container {
-  /* Tree container takes remaining space and scrolls */
   flex-grow: 1;
   overflow-y: auto;
-  /* Add some padding if needed */
-   padding: 5px;
+  padding: 5px;
 }
 
-/* Adjust button styles if needed */
 #copy-files-btn {
-    margin-left: auto; /* Push button to the right */
+    margin-left: auto;
 }
 
-/* Hide clone section elements that are removed */
 .clone-section {
     display: none;
 }
 
- /* Ensure loading/progress indicators are centered */
 #loading-indicator, .fetch-progress, .output-container {
-  flex-grow: 1; /* Allow these to fill space if tree isn't shown */
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -71,19 +62,16 @@ html {
   padding: 20px;
 }
  .fetch-progress {
-   /* Make fetch progress overlay correctly if needed, or ensure it replaces tree */
-    display: none; /* Initially hidden */
+    display: none;
  }
 
  .output-container pre {
-    max-height: 200px; /* Limit height of code blocks */
+    max-height: 200px;
     overflow: auto;
     width: 100%;
     text-align: left;
  }
 
-
-/* Ensure checkboxes are visible */
 input[type="checkbox"] {
   opacity: 1 !important;
   pointer-events: auto !important;
@@ -99,7 +87,6 @@ input[type="checkbox"] {
   z-index: 999 !important;
 }
 
-/* Ensure label is properly displayed */
 label {
   display: inline-flex !important;
   align-items: center !important;
@@ -171,7 +158,6 @@ button:hover {
   line-height: 1.5;
 }
 
-/* Tree view styles */
 .tree-container .tree-node {
   padding: 2px 0;
 }
@@ -250,7 +236,6 @@ button:hover {
   100% { transform: rotate(360deg); }
 }
 
-/* File and directory icons */
 .file-icon, .dir-icon {
   display: inline-block;
   width: 16px;
@@ -267,12 +252,10 @@ button:hover {
   background-color: #959da5;
 }
 
-/* Tree lines */
 .tree-line {
   color: #0366d6;
 }
 
-/* File and directory names */
 .dir-name {
   color: #0366d6;
   font-weight: bold;
@@ -282,7 +265,6 @@ button:hover {
   color: #24292e;
 }
 
-/* Bottom selection bar */
 .file-actions {
   padding: 8px;
   border-top: 1px solid #e1e4e8;
@@ -301,7 +283,6 @@ button:hover {
   color: #586069;
 }
 
-/* Progress overlay */
 .fetch-progress {
   position: fixed;
   top: 50%;
@@ -359,7 +340,6 @@ button:hover {
   height: 16px;
 }
 
-/* Rest of existing popup.css styles */
 .btn-secondary {
   color: #24292e;
   background-color: #fafbfc;
