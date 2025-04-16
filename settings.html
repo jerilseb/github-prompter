@@ -12,20 +12,22 @@
       <input type="password" id="github-token" class="form-control" placeholder="Enter your GitHub token">
       <small class="form-text">Your token will be securely stored in Browser storage.</small>
     </div>
-    <div id="pat-instructions" class="pat-instructions" style="display: none;">
-        <h4>How to get a GitHub Personal Access Token (PAT)</h4>
-        <ol>
-            <li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings > Developer settings > Personal access tokens</a>.</li>
-            <li>Click "Generate new token" (select "tokens (classic)").</li>
-            <li>Give your token a descriptive name (e.g., "GitHub Prompter Extension").</li>
-            <li>Set an expiration date (recommended).</li>
-            <li>Select the <strong>`repo`</strong> scope (Full control of private repositories). This is needed to access private repository contents and avoid rate limits on public ones.</li>
-            <li>Click "Generate token".</li>
-            <li><strong>Copy the token immediately!</strong> You won't be able to see it again.</li>
-            <li>Paste the copied token into the input field above and click "Save Token".</li>
-        </ol>
-        <p>For more details, see the <a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" target="_blank">GitHub documentation</a>.</p>
-    </div>
+    <details>
+        <summary style="cursor: pointer;">How to get a GitHub Personal Access Token (PAT)</summary>
+        <div id="pat-instructions" class="pat-instructions">
+            <ol>
+                <li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings > Developer settings > Personal access tokens</a>.</li>
+                <li>Click "Generate new token" (select "tokens (classic)").</li>
+                <li>Give your token a descriptive name (e.g., "GitHub Prompter Extension").</li>
+                <li>Set an expiration date (recommended).</li>
+                <li>Select the <strong>`repo`</strong> scope (Full control of private repositories). This is needed to access private repository contents and avoid rate limits on public ones.</li>
+                <li>Click "Generate token".</li>
+                <li><strong>Copy the token immediately!</strong> You won't be able to see it again.</li>
+                <li>Paste the copied token into the input field above and click "Save Token".</li>
+            </ol>
+            <p>For more details, see the <a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" target="_blank">GitHub documentation</a>.</p>
+        </div>
+    </details>
     <div class="button-group">
       <button id="save-token" class="btn btn-primary">Save Token</button>
       <button id="remove-token" class="btn btn-danger">Remove Token</button>
