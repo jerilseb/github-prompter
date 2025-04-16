@@ -59,8 +59,6 @@ function Tree(container, options) {
     disables: [],
     beforeLoad: null,
     loaded: null,
-    url: null,
-    method: 'GET',
     closeDepth: null,
   };
   this.treeNodes = [];
@@ -122,13 +120,7 @@ function Tree(container, options) {
     },
   });
 
-  if (this.options.url) {
-    this.load(data => {
-      this.init(data);
-    });
-  } else {
-    this.init(this.options.data);
-  }
+  this.init(this.options.data);
 }
 
 Tree.prototype.init = function(data) {
@@ -151,23 +143,6 @@ Tree.prototype.init = function(data) {
   defaultDisables.length && this.setDisables(defaultDisables);
   loaded && loaded.call(this);
   console.timeEnd('init');
-};
-
-Tree.prototype.load = function(callback) {
-  console.time('load');
-  const {url, method, beforeLoad} = this.options;
-  ajax({
-    url,
-    method,
-    success: result => {
-      let data = result;
-      console.timeEnd('load');
-      if (beforeLoad) {
-        data = beforeLoad(result);
-      }
-      callback(data);
-    },
-  });
 };
 
 Tree.prototype.render = function(treeNodes) {
