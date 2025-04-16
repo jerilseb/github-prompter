@@ -326,13 +326,16 @@ document.addEventListener('DOMContentLoaded', function() {
       // Copy to clipboard
       await navigator.clipboard.writeText(combinedContent);
 
-      // Show success feedback
-      progressText.textContent = `Successfully copied ${selectedFiles.length} files to clipboard!`;
-      fetchProgressDiv.querySelector('.spinner').style.display = 'none'; // Hide spinner on success
+      // Show success feedback as a green overlay
+      fetchProgressDiv.style.display = 'none'; // Hide progress indicator
+      const successDiv = document.createElement('div');
+      successDiv.className = 'success-notification';
+      successDiv.textContent = `Successfully copied ${selectedFiles.length} files to clipboard!`;
+      document.body.appendChild(successDiv);
 
        // Restore view after a delay
        setTimeout(() => {
-           fetchProgressDiv.style.display = 'none'; // Hide progress indicator
+           successDiv.remove(); // Remove the green overlay
            treeContainer.style.display = 'block'; // Restore tree view
            fileActionsDiv.style.display = 'flex'; // Restore actions
            // State (selection) is preserved
