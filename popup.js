@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       const tree = new Tree('#repo-tree', {
         data: [rootNode],
-        closeDepth: 2,
+        closeDepth: 1,
         loaded: function() {
           // Add custom classes to nodes
           const nodes = document.querySelectorAll('#repo-tree .tree-node');
