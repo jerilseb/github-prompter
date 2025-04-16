@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
       loadingIndicator.style.display = 'none';
       fileActionsDiv.style.display = 'none'; // Hide actions bar on error
+      fetchProgressDiv.style.display = 'none'; // Explicitly hide fetch progress too
       return;
     }
 

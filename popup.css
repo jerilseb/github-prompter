@@ -23,10 +23,6 @@ html {
   width: 400px;
 }
 
-.header {
-  flex-shrink: 0;
-}
-
 .file-actions {
   z-index: 10;
   border-bottom: 1px solid #e1e4e8;
@@ -82,7 +78,7 @@ label {
 }
 
 .header {
-  padding: 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid #e1e4e8;
   display: flex;
   justify-content: space-between;
