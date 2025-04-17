@@ -1,17 +1,19 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "GitHub Prompter",
   "version": "1.0",
-  "description": "Copy files from GitHub repositories",
+  "description": "Select files as LLM Ready Markdown from GitHub repositories",
   "permissions": [
     "activeTab",
-    "storage",
-    "https://api.github.com/*"
+    "storage"
   ],
-  "browser_action": {
+  "host_permissions": [
+    "https://api.github.com/repos/*"
+  ],
+  "action": {
     "default_popup": "popup.html"
   },
-  "options_page": "settings.html",
+  "options_page": "options.html",
   "icons": {
     "32": "images/32.png",
     "48": "images/48.png",
