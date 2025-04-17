@@ -88,7 +88,7 @@ h2 {
 
 /* Settings specific styles */
 .settings-container {
-  width: 500px;
+  width: 540px;
   max-width: 90%;
   background-color: #1e293b;
   padding: 24px;
@@ -146,3 +146,8 @@ label {
   color: #f87171;
   border: 1px solid rgba(248, 113, 113, 0.2);
 } 
+
+summary {
+  cursor: pointer;
+  font-size: 14px;
+}

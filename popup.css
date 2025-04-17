@@ -277,6 +277,7 @@ button.primary:hover {
   margin-bottom: 0;
   font-weight: 500;
   letter-spacing: 0.01em;
+  white-space: pre-line;
 }
 
 .icon-button {

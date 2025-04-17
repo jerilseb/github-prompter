@@ -13,14 +13,15 @@
       <small class="form-text">Your token will be securely stored in Browser storage.</small>
     </div>
     <details>
-        <summary style="cursor: pointer;">How to get a GitHub Personal Access Token (PAT)</summary>
+        <summary>How to get a GitHub Personal Access Token (PAT)</summary>
         <div id="pat-instructions" class="pat-instructions">
             <ol>
                 <li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings > Developer settings > Personal access tokens</a>.</li>
                 <li>Click "Generate new token" (select "tokens (classic)").</li>
                 <li>Give your token a descriptive name (e.g., "GitHub Prompter Extension").</li>
                 <li>Set an expiration date (recommended).</li>
-                <li>Select the <strong>`repo`</strong> scope (Full control of private repositories). This is needed to access private repository contents and avoid rate limits on public ones.</li>
+                <li>If you only want to access public repositories, no need to select any scope.</li>
+                <li>If you want to access private repositories, select the <strong>`repo`</strong> scope (Full control of private repositories).</li>
                 <li>Click "Generate token".</li>
                 <li><strong>Copy the token immediately!</strong> You won't be able to see it again.</li>
                 <li>Paste the copied token into the input field above and click "Save Token".</li>
