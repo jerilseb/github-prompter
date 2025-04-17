@@ -325,18 +325,7 @@ button.primary:hover {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-}
-
-.error-message::before {
-  content: '';
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="%23cf222e"><path d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16zm-0.83-4.26a0.85 0.85 0 1 0 1.66 0 0.85 0.85 0 0 0-1.66 0zM7.33 4.5v5.17h1.34V4.5H7.33z"/></svg>');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
+  white-space: pre-line;
 }
 
 .output-container {

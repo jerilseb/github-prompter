@@ -1,8 +1,3 @@
-const API_RATE_LIMIT_ERROR = 'API rate limit exceeded or private repository access denied. To increase the limit for public repositories or access private ones, add a GitHub Token in the Settings (⚙️).';
-const REPO_NOT_FOUND_ERROR = 'Repository not found. Check the URL or ensure you have access.';
-const GENERIC_ERROR = 'Failed to fetch repository contents.';
-
-
 async function getFetchOptions() {
   const options = {
     headers: {
@@ -22,12 +17,25 @@ async function getFetchOptions() {
 
 // Handle API response and throw appropriate errors
 async function handleApiResponse(response) {
+  // Log response headers
+  console.log('Response headers:', Object.fromEntries([...response.headers.entries()]));
+  
   if (response.status === 403) {
-    throw new Error(API_RATE_LIMIT_ERROR);
+    const resetTimestamp = response.headers.get('x-ratelimit-reset');
+    let waitMessage = '';
+    if (resetTimestamp) {
+      const resetTime = parseInt(resetTimestamp, 10) * 1000; // Convert to milliseconds
+      const currentTime = Date.now();
+      const waitSeconds = Math.max(0, Math.ceil((resetTime - currentTime) / 1000));
+      const waitMinutes = Math.floor(waitSeconds / 60);
+      const remainingSeconds = waitSeconds % 60;
+      waitMessage = `Or, you need to wait ${waitMinutes} minutes and ${remainingSeconds} seconds for the rate limit to reset`;
+    }
+    throw new Error(`Github API rate limit exceeded. To get increased access to public repositories or access private ones, add a GitHub Token in the Settings (⚙️).\n\n${waitMessage}`);
   } else if (response.status === 404) {
-    throw new Error(REPO_NOT_FOUND_ERROR);
+    throw new Error('Repository not found. Check the URL or ensure you have access.');
   } else if (!response.ok) {
-    throw new Error(GENERIC_ERROR);
+    throw new Error('Failed to fetch repository contents.');
   }
 
   return response.json();
