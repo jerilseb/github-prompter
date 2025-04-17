@@ -17,8 +17,6 @@ async function getFetchOptions() {
 
 // Handle API response and throw appropriate errors
 async function handleApiResponse(response) {
-  // Log response headers
-  console.log('Response headers:', Object.fromEntries([...response.headers.entries()]));
   
   if (response.status === 403) {
     const resetTimestamp = response.headers.get('x-ratelimit-reset');
@@ -64,10 +62,10 @@ async function fetchBranchInfo(owner, repo, branch) {
 }
 
 // Fetch repository tree
-async function fetchRepoTree(owner, repo, commitSha) {
+async function fetchRepoTree(owner, repo, branchOrCommitSha) {
   const options = await getFetchOptions();
   const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/git/trees/${commitSha}?recursive=1`,
+    `https://api.github.com/repos/${owner}/${repo}/git/trees/${branchOrCommitSha}?recursive=1`,
     options
   );
 

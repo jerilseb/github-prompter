@@ -55,15 +55,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
       currentRepoData = { owner, name: repo, branch }; // Store for later use
 
-      // Get the commit SHA for the branch
-      const branchData = await fetchBranchInfo(owner, repo, branch);
-      const commitSha = branchData.commit.sha;
+      // // Get the commit SHA for the branch
+      // const branchData = await fetchBranchInfo(owner, repo, branch);
+      // const commitSha = branchData.commit.sha;
 
       // Then get the tree with recursive option
-      const treeData = await fetchRepoTree(owner, repo, commitSha);
+      const rawTreeData = await fetchRepoTree(owner, repo, branch);
+      const treeData = processGitTree(rawTreeData.tree);
+      console.log(treeData);
 
       // Convert to tree format and display
-      showTreeView(processGitTree(treeData.tree), currentRepoData);
+      showTreeView(treeData, currentRepoData);
       repoInfoDiv.textContent = `${owner}/${repo} (${branch})`;
 
     } catch (error) {
@@ -171,6 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
+
     // Convert the tree structure to Tree.js format
     function convertToTreeFormat(node) {
       if (!node || typeof node !== 'object') return [];
@@ -192,18 +195,27 @@ document.addEventListener('DOMContentLoaded', function () {
     return convertToTreeFormat(root);
   }
 
-
   // Display the tree view
   function showTreeView(treeData, repository) {
     treeContainer.innerHTML = '<div id="repo-tree"></div>'; // Prepare container
     treeContainer.style.display = 'block'; // Ensure container is visible
     fileActionsDiv.style.display = 'flex'; // Show file actions bar
 
+    // Create root node
+    const rootNode = {
+      id: 'root',
+      text: `${repository.owner}/${repository.name}`,
+      children: treeData,
+      attributes: {
+        type: 'directory'
+      }
+    };
+
     // Initialize tree
     try {
       currentTree = new Tree('#repo-tree', {
-        data: treeData, // Pass the processed data directly
-        closeDepth: 0, // Start with top-level items expanded
+        data: [rootNode], // Pass the processed data directly
+        closeDepth: 1, // Start with top-level items expanded
         loaded: function () {
           // Add custom classes to nodes
           const nodes = document.querySelectorAll('#repo-tree .tree-node');
@@ -252,7 +264,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Removed Select All checkbox logic
   }
-
 
   // Handle copy files button click
   copyFilesBtn.onclick = async function () {
