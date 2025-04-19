@@ -1,4 +1,4 @@
-import { fetchRepoInfo, fetchBranchInfo, fetchRepoTree, fetchFileContent } from './githubApi.js';
+import { fetchRepoInfo, fetchRepoTree, fetchFileContent } from './githubApi.js';
 
 function initializePopup() {
   const treeContainer = document.getElementById('tree-container');

@@ -293,10 +293,8 @@ class Tree {
   }
 
   onItemClick(id) {
-    console.time('onItemClick');
     const node = this.nodesById[id];
     if (!node || node.disabled) {
-      console.timeEnd('onItemClick');
       return; // Do nothing if node doesn't exist or is disabled
     }
 
@@ -305,7 +303,6 @@ class Tree {
 
     // Call the onChange callback if provided
     this.options.onChange?.call(this);
-    console.timeEnd('onItemClick');
   }
 
   onSwitcherClick(switcherElement, liElement) {
