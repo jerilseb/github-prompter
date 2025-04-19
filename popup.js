@@ -62,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function () {
       // Then get the tree with recursive option
       const rawTreeData = await fetchRepoTree(owner, repo, branch);
       const treeData = processGitTree(rawTreeData.tree);
-      console.log(treeData);
 
       // Convert to tree format and display
       showTreeView(treeData, currentRepoData);
@@ -389,18 +388,37 @@ document.addEventListener('DOMContentLoaded', function () {
     const progressText = document.getElementById('fetch-progress-text');
     document.getElementById('success-icon').style.display = 'none'; // Ensure icon is hidden when fetching starts
     progressText.textContent = `Fetching ${selectedFiles.length} file contents...`;
-     // Clear any previous buttons in progress div (e.g., from error state)
-     const oldBackButton = fetchProgressDiv.querySelector('button');
+    // Clear any previous buttons in progress div (e.g., from error state)
+    const oldBackButton = fetchProgressDiv.querySelector('button');
     if (oldBackButton) oldBackButton.remove();
 
     try {
+      // Check if file tree should be included
+      const includeFileTreeResult = await chrome.storage.sync.get("includeFileTree");
+      const includeFileTree = includeFileTreeResult.includeFileTree || false;
+
+      // Generate file tree if needed
+      let fileTreeContent = '';
+      if (includeFileTree) {
+        // Extract file paths from the selected files instead of all files
+        const selectedFilePaths = selectedFiles.map(node => node.id);
+        fileTreeContent = generateFileTreeStructure(currentRepoData.name, selectedFilePaths);
+      }
+
       // Fetch contents for each FILTERED file
       const fileContents = await Promise.all(selectedFiles.map(async (node) => {
         const content = await fetchFileContent(currentRepoData.owner, currentRepoData.name, node.id, currentRepoData.branch);
         return `## File: ${node.id}\n\`\`\`\n${content}\n\`\`\``;
       }));
 
-      const combinedContent = fileContents.join('\n\n');
+      // Combine file tree and file contents
+      let combinedContent = '';
+      if (includeFileTree && fileTreeContent) {
+        combinedContent = `## File Tree Structure\n\n\`\`\`\n${fileTreeContent}\n\`\`\`\n\n${fileContents.join('\n\n')}`;
+      } else {
+        combinedContent = fileContents.join('\n\n');
+      }
+
       await navigator.clipboard.writeText(combinedContent);
 
       // Show success feedback in the progress div using the helper
@@ -412,5 +430,59 @@ document.addEventListener('DOMContentLoaded', function () {
       displayProgressFeedback(error.message, false); // Not a success case
     }
   };
+
+  // Function to generate file tree structure in the desired format
+  function generateFileTreeStructure(repoName, filePaths) {
+    if (!filePaths || filePaths.length === 0) return '';
+
+    // Sort paths to ensure consistent order
+    filePaths.sort();
+
+    // Build tree structure
+    const tree = {};
+    filePaths.forEach(path => {
+      // Split path into components
+      const parts = path.split('/');
+      let current = tree;
+
+      // Build tree structure
+      parts.forEach(part => {
+        if (!current[part]) {
+          current[part] = {};
+        }
+        current = current[part];
+      });
+    });
+
+    // Generate the formatted tree string
+    return formatTree(repoName, tree);
+  }
+
+  // Function to format the tree structure as a string
+  function formatTree(name, node, prefix = '', isLast = true) {
+    // Start with the root node
+    let result = `${prefix}${isLast ? '└── ' : '├── '}${name}${Object.keys(node).length > 0 ? '/' : ''}\n`;
+
+    // Process children
+    const keys = Object.keys(node).sort((a, b) => {
+      // Directories (with children) come first, then files
+      const aIsDir = Object.keys(node[a]).length > 0;
+      const bIsDir = Object.keys(node[b]).length > 0;
+
+      if (aIsDir && !bIsDir) return -1;
+      if (!aIsDir && bIsDir) return 1;
+
+      // Alphabetical order within the same type
+      return a.localeCompare(b);
+    });
+
+    keys.forEach((key, index) => {
+      const isLastChild = index === keys.length - 1;
+      const newPrefix = prefix + (isLast ? '    ' : '│   ');
+      result += formatTree(key, node[key], newPrefix, isLastChild);
+    });
+
+    return result;
+  }
 
 });
