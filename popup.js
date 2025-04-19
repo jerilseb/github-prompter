@@ -278,8 +278,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (regexString.endsWith('/')) {
       regexString += '.*'; // Match anything inside the directory
     } else {
-       // If not ending with /, make sure it matches the end of the string or a /
-       // regexString += '($|\\/)'; // Let's test without this first, might be too strict
+      // If not ending with /, make sure it matches the end of the string or a /
+      // regexString += '($|\\/)'; // Let's test without this first, might be too strict
     }
 
     // Ensure the pattern matches from the beginning of the path segment
@@ -294,6 +294,41 @@ document.addEventListener('DOMContentLoaded', function () {
       console.warn(`Invalid glob pattern "${glob}":`, e);
       return null; // Return null for invalid patterns
     }
+  }
+
+  // --- Helper function to display feedback and the Back button ---
+  function displayProgressFeedback(message, isSuccess = false) {
+    fetchProgressDiv.style.display = 'flex'; // Show progress area
+    treeContainer.style.display = 'none'; // Hide tree
+    fileActionsDiv.style.display = 'none'; // Hide actions
+    fetchProgressDiv.querySelector('.spinner').style.display = 'none'; // Hide spinner
+    const progressText = document.getElementById('fetch-progress-text');
+    const successIcon = document.getElementById('success-icon'); // Get the icon element
+
+    // Control icon visibility and content
+    successIcon.textContent = isSuccess ? '✓' : '';
+    successIcon.style.display = isSuccess ? 'block' : 'none';
+
+    progressText.textContent = message;
+
+    // Clear any previous buttons
+    const oldBackButton = fetchProgressDiv.querySelector('button');
+    if (oldBackButton) oldBackButton.remove();
+
+    // Add 'Back to Tree' button
+    const backButton = document.createElement('button');
+    backButton.textContent = 'Back to Tree';
+    backButton.className = 'btn btn-secondary';
+    backButton.style.marginTop = '16px';
+    backButton.onclick = () => {
+      fetchProgressDiv.style.display = 'none';
+      treeContainer.style.display = 'block';
+      fileActionsDiv.style.display = 'flex';
+      backButton.remove(); // Remove the button itself
+      progressText.textContent = ''; // Clear the progress text
+      document.getElementById('success-icon').style.display = 'none'; // Hide icon when going back
+    };
+    fetchProgressDiv.appendChild(backButton);
   }
 
   // --- Modified copy files button click handler ---
@@ -339,44 +374,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (selectedFiles.length === 0) {
       // If all files are ignored or none selected initially, update progress text and provide feedback
-      fileActionsDiv.style.display = 'none';
-      treeContainer.style.display = 'none';
-      fetchProgressDiv.style.display = 'flex';
-      fetchProgressDiv.querySelector('.spinner').style.display = 'none'; // Hide spinner
-      const progressText = document.getElementById('fetch-progress-text');
-      progressText.textContent = allSelectedFiles.length > 0 // Check if files were selected initially
+      const message = allSelectedFiles.length > 0 // Check if files were selected initially
         ? `All ${ignoredCount} selected file(s) were ignored.`
-        : 'No files selected to copy.'; // Clarify message
-
-      const backButton = document.createElement('button');
-      backButton.textContent = 'Back to Tree';
-      backButton.className = 'btn btn-secondary';
-      backButton.style.marginTop = '10px';
-      backButton.onclick = () => {
-        fetchProgressDiv.style.display = 'none';
-        treeContainer.style.display = 'block';
-        fileActionsDiv.style.display = 'flex';
-        backButton.remove();
-      };
-      // Clear any previous buttons
-      const oldBackButton = fetchProgressDiv.querySelector('button');
-      if (oldBackButton) oldBackButton.remove();
-      fetchProgressDiv.appendChild(backButton);
+        : 'No files selected to copy.';
+      displayProgressFeedback(message, false); // Not a success case
       return; // Stop processing
     }
 
     // --- Proceed with fetching and copying the FILTERED list ---
 
-    // Show fetching progress state
+    // Show fetching progress state (spinner visible initially)
     fileActionsDiv.style.display = 'none'; // Hide actions
     treeContainer.style.display = 'none'; // Hide tree
     fetchProgressDiv.style.display = 'flex'; // Show progress indicator
-    fetchProgressDiv.querySelector('.spinner').style.display = ''; // Ensure spinner is visible
+    fetchProgressDiv.querySelector('.spinner').style.display = ''; // Ensure spinner IS visible
     const progressText = document.getElementById('fetch-progress-text');
+    document.getElementById('success-icon').style.display = 'none'; // Ensure icon is hidden when fetching starts
     progressText.textContent = `Fetching ${selectedFiles.length} file contents...`;
-     // Clear any previous buttons in progress div
+     // Clear any previous buttons in progress div (e.g., from error state)
      const oldBackButton = fetchProgressDiv.querySelector('button');
-     if (oldBackButton) oldBackButton.remove();
+    if (oldBackButton) oldBackButton.remove();
 
     try {
       // Fetch contents for each FILTERED file
@@ -388,38 +405,13 @@ document.addEventListener('DOMContentLoaded', function () {
       const combinedContent = fileContents.join('\n\n');
       await navigator.clipboard.writeText(combinedContent);
 
-      // Show success feedback
-      fetchProgressDiv.style.display = 'none';
-      const successDiv = document.createElement('div');
-      successDiv.className = 'success-notification';
-      successDiv.textContent = `Successfully copied ${selectedFiles.length} files to clipboard!${ignoredCount > 0 ? ` (${ignoredCount} ignored)` : ''}`;
-      document.body.appendChild(successDiv);
-
-      setTimeout(() => {
-        successDiv.remove();
-        treeContainer.style.display = 'block';
-        fileActionsDiv.style.display = 'flex';
-      }, 2500); // Slightly longer timeout to read ignored count
+      // Show success feedback in the progress div using the helper
+      const successMessage = `Successfully copied ${selectedFiles.length} files to clipboard!${ignoredCount > 0 ? ` (${ignoredCount} ignored)` : ''}`;
+      displayProgressFeedback(successMessage, true); // Indicate success
 
     } catch (error) {
       console.error('Error fetching files:', error);
-      fetchProgressDiv.querySelector('.spinner').style.display = 'none';
-      progressText.textContent = error.message;
-
-      const backButton = document.createElement('button');
-      backButton.textContent = 'Back to Tree';
-      backButton.className = 'btn btn-secondary';
-      backButton.style.marginTop = '10px';
-      backButton.onclick = () => {
-        fetchProgressDiv.style.display = 'none';
-        treeContainer.style.display = 'block';
-        fileActionsDiv.style.display = 'flex';
-        backButton.remove();
-      };
-       // Clear any previous buttons
-      const oldBackButton = fetchProgressDiv.querySelector('button');
-      if (oldBackButton) oldBackButton.remove();
-      fetchProgressDiv.appendChild(backButton);
+      displayProgressFeedback(error.message, false); // Not a success case
     }
   };
 

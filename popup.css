@@ -50,10 +50,10 @@ html {
 }
 
 #loading-indicator,
-.fetch-progress,
+#fetch-progress,
 .output-container {
   flex-grow: 1;
-  display: flex;
+  display: none; /* Default to hidden */
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -61,6 +61,8 @@ html {
   padding: 20px;
 }
 
+/* Keep the specific display: none for the old class selector if needed, */
+/* although it should be redundant now if only the ID is used */
 .fetch-progress {
   display: none;
 }
@@ -424,4 +426,22 @@ button.primary:hover {
 .tooltip {
   font-size: 11px;
   color: #6a737d;
+}
+
+#success-icon {
+  display: none; /* Hidden by default */
+  font-size: 2.5em; /* Make it larger */
+  color: #28a745; /* Success green color */
+  margin-bottom: 8px; /* Space below icon */
+  line-height: 1; /* Adjust line height */
+}
+
+/* Optional: Adjust spacing if needed when icon is shown */
+#fetch-progress-text {
+  margin-top: 5px;
+}
+
+/* Optional: Center spinner if not already centered */
+#fetch-progress .spinner {
+    margin-bottom: 15px;
 }

@@ -33,9 +33,10 @@
       <!-- Tree will be rendered here -->
   </div>
 
-  <div class="fetch-progress" id="fetch-progress">
-    <div class="spinner"></div>
-    <div class="fetch-progress-text" id="fetch-progress-text">Fetching file contents...</div>
+  <div id="fetch-progress">
+    <div class="spinner" style="display: none;"></div>
+    <span id="success-icon" style="display: none;"></span>
+    <span id="fetch-progress-text"></span>
   </div>
 
   <script src="tree.js"></script>
