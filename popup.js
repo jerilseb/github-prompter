@@ -1,6 +1,6 @@
 import { fetchRepoInfo, fetchRepoTree, fetchFileContent } from './githubApi.js';
 
-function initializePopup() {
+async function initializePopup() {
   const treeContainer = document.getElementById('tree-container');
   const loadingIndicator = document.getElementById('loading-indicator');
   const settingsBtn = document.getElementById('settings-btn');
@@ -11,6 +11,21 @@ function initializePopup() {
 
   let currentTree = null; // Store tree instance
   let currentRepoData = null; // Store current repo { owner, name, branch }
+
+  let ignorePatterns = [];
+  try {
+    const result = await chrome.storage.sync.get("ignorePatterns");
+    if (result.ignorePatterns) {
+      ignorePatterns = result.ignorePatterns
+        .split('\n') // Split by newline
+        .map(p => p.trim()) // Trim whitespace
+        .filter(p => p); // Remove empty lines
+    }
+  } catch (error) {
+    console.error("Error fetching ignore patterns:", error);
+  }
+
+  const ignoreRegexes = ignorePatterns.map(globToRegex).filter(Boolean); // Filter out nulls from invalid patterns
 
   // Add settings button click handler
   settingsBtn.addEventListener('click', function () {
@@ -23,6 +38,37 @@ function initializePopup() {
     const url = tabs[0].url;
     loadRepository(url); // Automatically try to load repo from current tab
   });
+
+  // --- Helper function to convert simple glob patterns to regex ---
+  // Handles patterns like *.js, /dir/file, dir/
+  function globToRegex(glob) {
+    // Escape special regex characters, except *, ?, and /
+    let regexString = glob.replace(/([.+^$(){}|[\\]])/g, '\\$1');
+    // Convert glob wildcards to regex
+    regexString = regexString.replace(/\*/g, '[^/]*'); // * matches anything except /
+    regexString = regexString.replace(/\?/g, '[^/]'); // ? matches any single character except /
+
+    // Handle directory matching (e.g., 'dist/')
+    if (regexString.endsWith('/')) {
+      regexString += '.*'; // Match anything inside the directory
+    } else {
+      // If not ending with /, make sure it matches the end of the string or a /
+      // regexString += '($|\\/)'; // Let's test without this first, might be too strict
+    }
+
+    // Ensure the pattern matches from the beginning of the path segment
+    // or the start of the string
+    // Handle cases like *.js matching file.js and dir/file.js
+    // This makes it behave more like .gitignore matching
+    regexString = '(^|\\/)' + regexString;
+
+    try {
+      return new RegExp(regexString);
+    } catch (e) {
+      console.warn(`Invalid glob pattern "${glob}":`, e);
+      return null; // Return null for invalid patterns
+    }
+  }
 
   // Function to fetch and display the repository tree
   async function loadRepository(url) {
@@ -256,44 +302,19 @@ function initializePopup() {
     const selectedFileNodes = selectedNodes.filter(node =>
       node.attributes && node.attributes.type === 'file'
     );
-    const count = selectedFileNodes.length;
-    // Update button text
+    const filteredNodes = selectedFileNodes.filter(node => {
+      const filePath = node.id; // Assuming node.id is the full path
+      return !ignoreRegexes.some(regex => regex.test(filePath));
+    });
+
+    const count = filteredNodes.length;
+    const ignoredCount = selectedFileNodes.length - count;
+
     copyFilesBtn.textContent = `Copy ${count} File${count !== 1 ? 's' : ''}`;
-    // Enable/disable button
+    if (ignoredCount > 0) {
+      copyFilesBtn.textContent += ` (${ignoredCount} ignored)`;
+    }
     copyFilesBtn.disabled = count === 0;
-
-    // Removed Select All checkbox logic
-  }
-
-  // --- Helper function to convert simple glob patterns to regex ---
-  // Handles patterns like *.js, /dir/file, dir/
-  function globToRegex(glob) {
-    // Escape special regex characters, except *, ?, and /
-    let regexString = glob.replace(/([.+^$(){}|[\\]])/g, '\\$1');
-    // Convert glob wildcards to regex
-    regexString = regexString.replace(/\*/g, '[^/]*'); // * matches anything except /
-    regexString = regexString.replace(/\?/g, '[^/]'); // ? matches any single character except /
-
-    // Handle directory matching (e.g., 'dist/')
-    if (regexString.endsWith('/')) {
-      regexString += '.*'; // Match anything inside the directory
-    } else {
-      // If not ending with /, make sure it matches the end of the string or a /
-      // regexString += '($|\\/)'; // Let's test without this first, might be too strict
-    }
-
-    // Ensure the pattern matches from the beginning of the path segment
-    // or the start of the string
-    // Handle cases like *.js matching file.js and dir/file.js
-    // This makes it behave more like .gitignore matching
-    regexString = '(^|\\/)' + regexString;
-
-    try {
-      return new RegExp(regexString);
-    } catch (e) {
-      console.warn(`Invalid glob pattern "${glob}":`, e);
-      return null; // Return null for invalid patterns
-    }
   }
 
   // --- Helper function to display feedback and the Back button ---
@@ -335,24 +356,6 @@ function initializePopup() {
   async function copyFiles() {
     if (!currentTree || !currentRepoData) return;
 
-    // --- Fetch Ignore Patterns ---
-    let ignorePatterns = [];
-    try {
-      const result = await chrome.storage.sync.get("ignorePatterns");
-      if (result.ignorePatterns) {
-        ignorePatterns = result.ignorePatterns
-          .split('\n') // Split by newline
-          .map(p => p.trim()) // Trim whitespace
-          .filter(p => p); // Remove empty lines
-      }
-    } catch (error) {
-      console.error("Error fetching ignore patterns:", error);
-      // Optionally notify the user or proceed without filtering
-    }
-
-    // --- Compile ignore patterns to Regex ---
-    const ignoreRegexes = ignorePatterns.map(globToRegex).filter(Boolean); // Filter out nulls from invalid patterns
-
     // Get selected file nodes
     const selectedNodes = currentTree.selectedNodes.filter(node =>
       node.attributes && node.attributes.type === 'file'
@@ -365,15 +368,6 @@ function initializePopup() {
     });
 
     const ignoredCount = selectedNodes.length - filteredNodes.length;
-
-    if (filteredNodes.length === 0) {
-      // If all files are ignored or none selected initially, update progress text and provide feedback
-      const message = selectedNodes.length > 0 // Check if files were selected initially
-        ? `All ${ignoredCount} selected file(s) were ignored.`
-        : 'No files selected to copy.';
-      displayProgressFeedback(message, false); // Not a success case
-      return;
-    }
 
     // Show fetching progress state (spinner visible initially)
     fileActionsDiv.style.display = 'none'; // Hide actions
