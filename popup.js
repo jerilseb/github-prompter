@@ -265,69 +265,89 @@ document.addEventListener('DOMContentLoaded', function () {
     // Removed Select All checkbox logic
   }
 
-  // Handle copy files button click
+  // --- Helper function to convert simple glob patterns to regex ---
+  // Handles patterns like *.js, /dir/file, dir/
+  function globToRegex(glob) {
+    // Escape special regex characters, except *, ?, and /
+    let regexString = glob.replace(/([.+^$(){}|[\\]])/g, '\\$1');
+    // Convert glob wildcards to regex
+    regexString = regexString.replace(/\*/g, '[^/]*'); // * matches anything except /
+    regexString = regexString.replace(/\?/g, '[^/]'); // ? matches any single character except /
+
+    // Handle directory matching (e.g., 'dist/')
+    if (regexString.endsWith('/')) {
+      regexString += '.*'; // Match anything inside the directory
+    } else {
+       // If not ending with /, make sure it matches the end of the string or a /
+       // regexString += '($|\\/)'; // Let's test without this first, might be too strict
+    }
+
+    // Ensure the pattern matches from the beginning of the path segment
+    // or the start of the string
+    // Handle cases like *.js matching file.js and dir/file.js
+    // This makes it behave more like .gitignore matching
+    regexString = '(^|\\/)' + regexString;
+
+    try {
+      return new RegExp(regexString);
+    } catch (e) {
+      console.warn(`Invalid glob pattern "${glob}":`, e);
+      return null; // Return null for invalid patterns
+    }
+  }
+
+  // --- Modified copy files button click handler ---
   copyFilesBtn.onclick = async function () {
     if (!currentTree || !currentRepoData) return;
 
+    // --- Fetch Ignore Patterns ---
+    let ignorePatterns = [];
+    try {
+      const result = await new Promise((resolve) => {
+        chrome.storage.sync.get(['ignorePatterns'], resolve);
+      });
+      if (result.ignorePatterns) {
+        ignorePatterns = result.ignorePatterns
+          .split('\n') // Split by newline
+          .map(p => p.trim()) // Trim whitespace
+          .filter(p => p); // Remove empty lines
+      }
+    } catch (error) {
+      console.error("Error fetching ignore patterns:", error);
+      // Optionally notify the user or proceed without filtering
+    }
+
+    // --- Compile ignore patterns to Regex ---
+    const ignoreRegexes = ignorePatterns.map(globToRegex).filter(Boolean); // Filter out nulls from invalid patterns
+
     // Get selected file nodes
-    const selectedFiles = currentTree.selectedNodes.filter(node =>
+    const allSelectedFiles = currentTree.selectedNodes.filter(node =>
       node.attributes && node.attributes.type === 'file'
     );
 
-    if (selectedFiles.length === 0) {
-      // This state shouldn't be reachable if button is disabled correctly
-      return;
+    // --- Filter selected files based on ignore patterns ---
+    const selectedFiles = allSelectedFiles.filter(node => {
+      const filePath = node.id; // Assuming node.id is the full path
+      return !ignoreRegexes.some(regex => regex.test(filePath));
+    });
+
+    const ignoredCount = allSelectedFiles.length - selectedFiles.length;
+    if (ignoredCount > 0) {
+      console.log(`Ignoring ${ignoredCount} file(s) based on patterns.`);
+      // Maybe show a subtle notification later?
     }
 
-    // Show fetching progress state
-    fileActionsDiv.style.display = 'none'; // Hide actions
-    treeContainer.style.display = 'none'; // Hide tree
-    fetchProgressDiv.style.display = 'flex'; // Show progress indicator
-    fetchProgressDiv.querySelector('.spinner').style.display = ''; // Ensure spinner is visible
-    const progressText = document.getElementById('fetch-progress-text');
-    progressText.textContent = `Fetching ${selectedFiles.length} file contents...`;
-    // Clear any previous buttons in progress div
-    const oldBackButton = fetchProgressDiv.querySelector('button');
-    if (oldBackButton) oldBackButton.remove();
+    if (selectedFiles.length === 0) {
+      // If all files are ignored or none selected initially, update progress text and provide feedback
+      fileActionsDiv.style.display = 'none';
+      treeContainer.style.display = 'none';
+      fetchProgressDiv.style.display = 'flex';
+      fetchProgressDiv.querySelector('.spinner').style.display = 'none'; // Hide spinner
+      const progressText = document.getElementById('fetch-progress-text');
+      progressText.textContent = allSelectedFiles.length > 0 // Check if files were selected initially
+        ? `All ${ignoredCount} selected file(s) were ignored.`
+        : 'No files selected to copy.'; // Clarify message
 
-
-    try {
-      // Fetch contents for each file
-      const fileContents = await Promise.all(selectedFiles.map(async (node) => {
-        // Ensure node.id contains the full path needed for the API call
-        const content = await fetchFileContent(currentRepoData.owner, currentRepoData.name, node.id, currentRepoData.branch);
-        // Use a clear separator and indicate the file path
-        return `## File: ${node.id}\n\`\`\`\n${content}\n\`\`\``;
-      }));
-
-      // Combine all contents with double newline for better separation
-      const combinedContent = fileContents.join('\n\n');
-
-      // Copy to clipboard
-      await navigator.clipboard.writeText(combinedContent);
-
-      // Show success feedback as a green overlay
-      fetchProgressDiv.style.display = 'none'; // Hide progress indicator
-      const successDiv = document.createElement('div');
-      successDiv.className = 'success-notification';
-      successDiv.textContent = `Successfully copied ${selectedFiles.length} files to clipboard!`;
-      document.body.appendChild(successDiv);
-
-      // Restore view after a delay
-      setTimeout(() => {
-        successDiv.remove(); // Remove the green overlay
-        treeContainer.style.display = 'block'; // Restore tree view
-        fileActionsDiv.style.display = 'flex'; // Restore actions
-        // State (selection) is preserved
-      }, 2000);
-
-
-    } catch (error) {
-      console.error('Error fetching files:', error);
-      fetchProgressDiv.querySelector('.spinner').style.display = 'none'; // Hide spinner on error
-      progressText.textContent = error.message; // Display error message
-
-      // Add a button to dismiss the error and go back
       const backButton = document.createElement('button');
       backButton.textContent = 'Back to Tree';
       backButton.className = 'btn btn-secondary';
@@ -336,8 +356,69 @@ document.addEventListener('DOMContentLoaded', function () {
         fetchProgressDiv.style.display = 'none';
         treeContainer.style.display = 'block';
         fileActionsDiv.style.display = 'flex';
-        backButton.remove(); // Clean up button
+        backButton.remove();
       };
+      // Clear any previous buttons
+      const oldBackButton = fetchProgressDiv.querySelector('button');
+      if (oldBackButton) oldBackButton.remove();
+      fetchProgressDiv.appendChild(backButton);
+      return; // Stop processing
+    }
+
+    // --- Proceed with fetching and copying the FILTERED list ---
+
+    // Show fetching progress state
+    fileActionsDiv.style.display = 'none'; // Hide actions
+    treeContainer.style.display = 'none'; // Hide tree
+    fetchProgressDiv.style.display = 'flex'; // Show progress indicator
+    fetchProgressDiv.querySelector('.spinner').style.display = ''; // Ensure spinner is visible
+    const progressText = document.getElementById('fetch-progress-text');
+    progressText.textContent = `Fetching ${selectedFiles.length} file contents...`;
+     // Clear any previous buttons in progress div
+     const oldBackButton = fetchProgressDiv.querySelector('button');
+     if (oldBackButton) oldBackButton.remove();
+
+    try {
+      // Fetch contents for each FILTERED file
+      const fileContents = await Promise.all(selectedFiles.map(async (node) => {
+        const content = await fetchFileContent(currentRepoData.owner, currentRepoData.name, node.id, currentRepoData.branch);
+        return `## File: ${node.id}\n\`\`\`\n${content}\n\`\`\``;
+      }));
+
+      const combinedContent = fileContents.join('\n\n');
+      await navigator.clipboard.writeText(combinedContent);
+
+      // Show success feedback
+      fetchProgressDiv.style.display = 'none';
+      const successDiv = document.createElement('div');
+      successDiv.className = 'success-notification';
+      successDiv.textContent = `Successfully copied ${selectedFiles.length} files to clipboard!${ignoredCount > 0 ? ` (${ignoredCount} ignored)` : ''}`;
+      document.body.appendChild(successDiv);
+
+      setTimeout(() => {
+        successDiv.remove();
+        treeContainer.style.display = 'block';
+        fileActionsDiv.style.display = 'flex';
+      }, 2500); // Slightly longer timeout to read ignored count
+
+    } catch (error) {
+      console.error('Error fetching files:', error);
+      fetchProgressDiv.querySelector('.spinner').style.display = 'none';
+      progressText.textContent = error.message;
+
+      const backButton = document.createElement('button');
+      backButton.textContent = 'Back to Tree';
+      backButton.className = 'btn btn-secondary';
+      backButton.style.marginTop = '10px';
+      backButton.onclick = () => {
+        fetchProgressDiv.style.display = 'none';
+        treeContainer.style.display = 'block';
+        fileActionsDiv.style.display = 'flex';
+        backButton.remove();
+      };
+       // Clear any previous buttons
+      const oldBackButton = fetchProgressDiv.querySelector('button');
+      if (oldBackButton) oldBackButton.remove();
       fetchProgressDiv.appendChild(backButton);
     }
   };

@@ -98,11 +98,56 @@ h2 {
   border: 1px solid #334155;
 }
 
+.input-group {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.input-group .form-control {
+  flex: 1 1 auto;
+  margin-top: 0;
+  padding-right: 40px;
+}
+
+.input-group .btn {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  padding: 6px;
+  margin: 0;
+  cursor: pointer;
+  font-size: 28px;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.input-group .btn:hover {
+  color: #9ca3af;
+  background: none;
+  transform: translateY(-50%);
+  box-shadow: none;
+}
+
+.input-group .btn:active {
+  transform: translateY(-50%);
+  box-shadow: none;
+}
+
 label {
   font-weight: 500;
   color: #e2e8f0;
   display: block;
+  font-size: 12px;
   margin-bottom: 4px;
+}
+
+details {
+  margin: 4px 0;
 }
 
 .form-text {
