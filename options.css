@@ -60,7 +60,7 @@ h2 {
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 32px;
 }
 
 .form-control {
@@ -142,7 +142,7 @@ label {
   font-weight: 500;
   color: #e2e8f0;
   display: block;
-  font-size: 12px;
+  font-size: 14px;
   margin-bottom: 4px;
 }
 
@@ -195,4 +195,10 @@ details {
 summary {
   cursor: pointer;
   font-size: 14px;
+}
+
+#include-file-tree {
+  transform: scale(1.5) translateY(1px);
+  margin-right: 4px; 
+  cursor: pointer;
 }

@@ -34,8 +34,16 @@
     </div>
 
     <div class="form-group">
+      <label for="include-file-tree">
+        <input type="checkbox" id="include-file-tree">
+        Include file tree structure in prompt
+      </label>
+      <small class="form-text">Include the file tree structure along with the selected files in the generated prompt.</small>
+    </div>
+
+    <div class="form-group">
       <label for="ignore-patterns">Ignored File Patterns during copy</label>
-      <textarea id="ignore-patterns" class="form-control" rows="5" placeholder="e.g., *.png\\n*.jpg\\ndist/">*.png
+      <textarea id="ignore-patterns" class="form-control" rows="8" placeholder="e.g., *.png\\n*.jpg\\ndist/">*.png
 *.jpg
 *.mp3</textarea>
       <small class="form-text">Enter one glob pattern per line for files/directories to ignore.</small>

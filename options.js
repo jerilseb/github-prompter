@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const removeButton = document.getElementById('remove-token');
   const statusMessage = document.getElementById('status-message');
   const patInstructions = document.getElementById('pat-instructions');
+  const includeFileTreeCheckbox = document.getElementById('include-file-tree');
 
   // Function to toggle clear button visibility
   function toggleClearButtonVisibility() {
@@ -16,13 +17,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Load existing settings
-  chrome.storage.sync.get(['githubToken', 'ignorePatterns'], function(result) {
+  chrome.storage.sync.get(['githubToken', 'ignorePatterns', 'includeFileTree'], function(result) {
     if (result.githubToken) {
       tokenInput.value = result.githubToken;
     }
     if (result.ignorePatterns) {
       ignorePatternsInput.value = result.ignorePatterns;
     }
+    includeFileTreeCheckbox.checked = result.includeFileTree || false;
     // Set initial button visibility
     toggleClearButtonVisibility();
   });
@@ -34,9 +36,10 @@ document.addEventListener('DOMContentLoaded', function() {
   saveButton.addEventListener('click', function() {
     const token = tokenInput.value.trim();
     const ignorePatterns = ignorePatternsInput.value.trim();
+    const includeFileTree = includeFileTreeCheckbox.checked;
 
-    // Save both settings
-    chrome.storage.sync.set({ githubToken: token, ignorePatterns: ignorePatterns }, function() {
+    // Save all settings
+    chrome.storage.sync.set({ githubToken: token, ignorePatterns: ignorePatterns, includeFileTree: includeFileTree }, function() {
       // Check for errors
       if (chrome.runtime.lastError) {
         showStatus(`Error saving settings: ${chrome.runtime.lastError.message}`, 'error');
