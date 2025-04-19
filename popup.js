@@ -1,6 +1,6 @@
 import { fetchRepoInfo, fetchBranchInfo, fetchRepoTree, fetchFileContent } from './githubApi.js';
 
-document.addEventListener('DOMContentLoaded', function () {
+function initializePopup() {
   const treeContainer = document.getElementById('tree-container');
   const loadingIndicator = document.getElementById('loading-indicator');
   const settingsBtn = document.getElementById('settings-btn');
@@ -15,6 +15,13 @@ document.addEventListener('DOMContentLoaded', function () {
   // Add settings button click handler
   settingsBtn.addEventListener('click', function () {
     chrome.runtime.openOptionsPage();
+  });
+
+  copyFilesBtn.addEventListener('click', copyFiles);
+
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    const url = tabs[0].url;
+    loadRepository(url); // Automatically try to load repo from current tab
   });
 
   // Function to fetch and display the repository tree
@@ -84,12 +91,6 @@ document.addEventListener('DOMContentLoaded', function () {
       loadingIndicator.style.display = 'none';
     }
   }
-
-  // Check current tab URL and automatically load repository
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    const url = tabs[0].url;
-    loadRepository(url); // Automatically try to load repo from current tab
-  });
 
   // Process Git Tree data into hierarchical structure
   function processGitTree(items) {
@@ -331,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // --- Modified copy files button click handler ---
-  copyFilesBtn.onclick = async function () {
+  async function copyFiles() {
     if (!currentTree || !currentRepoData) return;
 
     // --- Fetch Ignore Patterns ---
@@ -353,32 +354,26 @@ document.addEventListener('DOMContentLoaded', function () {
     const ignoreRegexes = ignorePatterns.map(globToRegex).filter(Boolean); // Filter out nulls from invalid patterns
 
     // Get selected file nodes
-    const allSelectedFiles = currentTree.selectedNodes.filter(node =>
+    const selectedNodes = currentTree.selectedNodes.filter(node =>
       node.attributes && node.attributes.type === 'file'
     );
 
     // --- Filter selected files based on ignore patterns ---
-    const selectedFiles = allSelectedFiles.filter(node => {
+    const filteredNodes = selectedNodes.filter(node => {
       const filePath = node.id; // Assuming node.id is the full path
       return !ignoreRegexes.some(regex => regex.test(filePath));
     });
 
-    const ignoredCount = allSelectedFiles.length - selectedFiles.length;
-    if (ignoredCount > 0) {
-      console.log(`Ignoring ${ignoredCount} file(s) based on patterns.`);
-      // Maybe show a subtle notification later?
-    }
+    const ignoredCount = selectedNodes.length - filteredNodes.length;
 
-    if (selectedFiles.length === 0) {
+    if (filteredNodes.length === 0) {
       // If all files are ignored or none selected initially, update progress text and provide feedback
-      const message = allSelectedFiles.length > 0 // Check if files were selected initially
+      const message = selectedNodes.length > 0 // Check if files were selected initially
         ? `All ${ignoredCount} selected file(s) were ignored.`
         : 'No files selected to copy.';
       displayProgressFeedback(message, false); // Not a success case
-      return; // Stop processing
+      return;
     }
-
-    // --- Proceed with fetching and copying the FILTERED list ---
 
     // Show fetching progress state (spinner visible initially)
     fileActionsDiv.style.display = 'none'; // Hide actions
@@ -387,7 +382,7 @@ document.addEventListener('DOMContentLoaded', function () {
     fetchProgressDiv.querySelector('.spinner').style.display = ''; // Ensure spinner IS visible
     const progressText = document.getElementById('fetch-progress-text');
     document.getElementById('success-icon').style.display = 'none'; // Ensure icon is hidden when fetching starts
-    progressText.textContent = `Fetching ${selectedFiles.length} file contents...`;
+    progressText.textContent = `Fetching ${filteredNodes.length} file contents...`;
     // Clear any previous buttons in progress div (e.g., from error state)
     const oldBackButton = fetchProgressDiv.querySelector('button');
     if (oldBackButton) oldBackButton.remove();
@@ -401,12 +396,12 @@ document.addEventListener('DOMContentLoaded', function () {
       let fileTreeContent = '';
       if (includeFileTree) {
         // Extract file paths from the selected files instead of all files
-        const selectedFilePaths = selectedFiles.map(node => node.id);
+        const selectedFilePaths = filteredNodes.map(node => node.id);
         fileTreeContent = generateFileTreeStructure(currentRepoData.name, selectedFilePaths);
       }
 
       // Fetch contents for each FILTERED file
-      const fileContents = await Promise.all(selectedFiles.map(async (node) => {
+      const fileContents = await Promise.all(filteredNodes.map(async (node) => {
         const content = await fetchFileContent(currentRepoData.owner, currentRepoData.name, node.id, currentRepoData.branch);
         return `## File: ${node.id}\n\`\`\`\n${content}\n\`\`\``;
       }));
@@ -422,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function () {
       await navigator.clipboard.writeText(combinedContent);
 
       // Show success feedback in the progress div using the helper
-      const successMessage = `Successfully copied ${selectedFiles.length} files to clipboard!${ignoredCount > 0 ? ` (${ignoredCount} ignored)` : ''}`;
+      const successMessage = `Successfully copied ${filteredNodes.length} files to clipboard!${ignoredCount > 0 ? ` (${ignoredCount} ignored)` : ''}`;
       displayProgressFeedback(successMessage, true); // Indicate success
 
     } catch (error) {
@@ -485,4 +480,6 @@ document.addEventListener('DOMContentLoaded', function () {
     return result;
   }
 
-});
+}
+
+document.addEventListener('DOMContentLoaded', initializePopup);
