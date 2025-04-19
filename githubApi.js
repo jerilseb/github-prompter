@@ -5,14 +5,12 @@ async function getFetchOptions() {
     }
   };
 
-  return new Promise((resolve) => {
-    chrome.storage.sync.get(['githubToken'], function (result) {
-      if (result.githubToken) {
-        options.headers['Authorization'] = `token ${result.githubToken}`;
-      }
-      resolve(options);
-    });
-  });
+  const result = await chrome.storage.sync.get("githubToken");
+  if (result.githubToken) {
+    options.headers['Authorization'] = `token ${result.githubToken}`;
+  }
+  
+  return options;
 }
 
 // Handle API response and throw appropriate errors

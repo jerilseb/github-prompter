@@ -338,9 +338,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- Fetch Ignore Patterns ---
     let ignorePatterns = [];
     try {
-      const result = await new Promise((resolve) => {
-        chrome.storage.sync.get(['ignorePatterns'], resolve);
-      });
+      const result = await chrome.storage.sync.get("ignorePatterns");
       if (result.ignorePatterns) {
         ignorePatterns = result.ignorePatterns
           .split('\n') // Split by newline
