@@ -5,7 +5,9 @@
 
 **Your AI coding assistant's best friend!** Grab code from any GitHub repo and format it perfectly for ChatGPT, Claude, or your favorite LLM - all with just a few clicks! No more copy-paste marathons or repository cloning just to ask a question about some code. 💪
 
-![Demo GIF](https://via.placeholder.com/600x400.png?text=GitHub+Prompter+in+Action!)
+
+https://github.com/user-attachments/assets/eead97c0-5b94-42bb-8ea2-1893bb4148d4
+
 *Grab this code → Format it beautifully → Paste into your favorite AI assistant!*
 
 ## ✨ What Makes GitHub Prompter Special?
@@ -15,28 +17,6 @@
 - **⚡ Lightning Fast** - Get the code you need in seconds, without cloning repositories or navigating through GitHub's interface
 - **🔒 Private Repos** - Access your private repositories by adding a GitHub token
 - **🧠 Smart Ignoring** - Automatically skip binary files, images, and other non-code files (customizable!)
-
-## 🎬 How It Works
-
-When you copy files, GitHub Prompter formats them like this:
-
-```markdown
-## File: src/main.js
-```
-function hello() {
-  console.log("Hello world!");
-}
-```
-
-## File: src/styles.css
-```
-body {
-  font-family: sans-serif;
-}
-```
-```
-
-This format is **perfect for AI tools** - it clearly shows file paths and preserves syntax highlighting!
 
 ## 🚀 Quick Start
 
