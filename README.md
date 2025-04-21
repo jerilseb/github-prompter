@@ -1,72 +1,77 @@
-# GitHub Prompter 🚀
+# 🚀 GitHub Prompter
 
-[![Chrome Extension](https://img.shields.io/badge/Chrome%20Extension-v1.0-brightgreen.svg)](https://chrome.google.com/webstore/detail/your-extension-id) <!-- Replace with actual link if/when published -->
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) <!-- Add if you have a license -->
+[![Chrome Extension](https://img.shields.io/badge/Chrome%20Extension-v1.0-brightgreen.svg)](https://chrome.google.com/webstore/detail/your-extension-id)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A simple Chrome extension to quickly browse and copy the contents of selected files from any public or private (with token) GitHub repository directly to your clipboard. Perfect for grabbing code snippets, configurations, or documentation across multiple files without cloning!
+**Your AI coding assistant's best friend!** Grab code from any GitHub repo and format it perfectly for ChatGPT, Claude, or your favorite LLM - all with just a few clicks! No more copy-paste marathons or repository cloning just to ask a question about some code. 💪
 
-![Screenshot/GIF Placeholder](https://via.placeholder.com/600x400.png?text=Add+a+GIF+or+Screenshot+Here!)
-*(Suggestion: Replace the placeholder above with a GIF demonstrating the extension in action!)*
+![Demo GIF](https://via.placeholder.com/600x400.png?text=GitHub+Prompter+in+Action!)
+*Grab this code → Format it beautifully → Paste into your favorite AI assistant!*
 
-## ✨ Features
+## ✨ What Makes GitHub Prompter Special?
 
-*   **Fetch Repository:** Enter a GitHub repository URL and instantly load its file structure.
-*   **Interactive File Tree:** Browse the repository's directories and files easily within the popup.
-*   **File Selection:** Use checkboxes to select the specific files you need. Selecting a directory selects all files within it.
-*   **Copy to Clipboard:** Copies the full content of all selected files, formatted with the file path as a header for each file.
-*   **GitHub Integration:** Auto-fills the repository URL if you open the extension while on a GitHub repo page.
-*   **Private Repo & Rate Limit Support:** Optionally add a GitHub Personal Access Token (PAT) via the Settings page to access private repositories and avoid API rate limits.
+- **🤖 AI-Friendly Formatting** - Code is automatically formatted with file paths as headers and proper markdown syntax, making it perfect for AI prompts
+- **🌳 Interactive File Tree** - Easily browse and select exactly the files you need from any repository
+- **⚡ Lightning Fast** - Get the code you need in seconds, without cloning repositories or navigating through GitHub's interface
+- **🔒 Private Repos** - Access your private repositories by adding a GitHub token
+- **🧠 Smart Ignoring** - Automatically skip binary files, images, and other non-code files (customizable!)
 
-## 🚀 How to Use
+## 🎬 How It Works
 
-1.  **Navigate (Optional):** Go to a GitHub repository page you want to browse (e.g., `https://github.com/owner/repo`). This helps auto-fill the URL.
-2.  **Open Extension:** Click the **GitHub Prompter** icon in your Chrome toolbar.
-3.  **Enter URL:** If not auto-filled, paste the full GitHub repository URL into the input field.
-4.  **Fetch:** Click the **"Fetch Repository"** button.
-5.  **Browse & Select:** Wait for the file tree to load. Expand directories and use the checkboxes to select the files you want to copy.
-    ![File Tree Example](https://via.placeholder.com/450x200.png?text=File+Tree+Selection) *(Suggestion: Replace with an actual screenshot)*
-6.  **Copy:** Once you've selected your files, click the **"Copy Selected Files to Clipboard"** button at the bottom.
-    ![Copy Button Example](https://via.placeholder.com/450x50.png?text=Copy+Button) *(Suggestion: Replace with an actual screenshot)*
-7.  **Paste:** The content of the selected files, each prefixed with its path (e.g., `============= path/to/file.js`), is now on your clipboard!
+When you copy files, GitHub Prompter formats them like this:
 
-## ⚙️ Configuration (Optional: GitHub Token)
+```markdown
+## File: src/main.js
+```
+function hello() {
+  console.log("Hello world!");
+}
+```
 
-To access **private repositories** or avoid hitting **GitHub API rate limits** (especially on large repositories or frequent use), you can add a Personal Access Token (PAT).
+## File: src/styles.css
+```
+body {
+  font-family: sans-serif;
+}
+```
+```
 
-1.  **Open Settings:** Click the **Settings icon (⚙️)** in the top-right corner of the extension popup, or right-click the extension icon in your toolbar and choose "Options".
-2.  **Generate Token:** Create a PAT from your [GitHub Developer Settings](https://github.com/settings/tokens).
-    *   For accessing **public repositories** and avoiding rate limits, no specific scopes are required.
-    *   For accessing **private repositories**, you'll need appropriate permissions (e.g., the `repo` scope).
-3.  **Enter Token:** Paste the generated token into the "GitHub Personal Access Token" field on the settings page.
-4.  **Save:** Click **"Save Token"**. The token is stored securely using Chrome's storage API.
+This format is **perfect for AI tools** - it clearly shows file paths and preserves syntax highlighting!
 
-## 🛠️ Installation
+## 🚀 Quick Start
 
-*(Choose **one** of the following methods based on how you distribute it)*
+1. **Click the GitHub Prompter icon** while on any GitHub repository page
+2. **Browse the file tree** and select the files you want to include
+3. **Click "Copy Selected Files"** to copy them in AI-friendly format
+4. **Paste directly into ChatGPT, Claude, or any other AI assistant**
+5. **Ask away!** Your AI now has perfect context about the code
 
-**Method 1: From Chrome Web Store (Recommended)**
+## ⚙️ Configuration
 
-1.  Install the extension from the [Chrome Web Store](your-link-here) *(Link not available yet)*.
-2.  Pin the extension icon to your toolbar for easy access.
+Need to access private repos or avoid rate limits? Add a GitHub token:
 
-**Method 2: Manual Installation (For Development)**
+1. Click the **⚙️ icon** in the extension popup
+2. Generate a token from [GitHub Developer Settings](https://github.com/settings/tokens)
+3. Paste your token and save!
 
-1.  Download or clone this repository:
-    ```bash
-    git clone https://github.com/your-username/github-prompter.git # Replace with your repo URL
-    ```
-2.  Open Chrome and navigate to `chrome://extensions/`.
-3.  Enable **"Developer mode"** using the toggle switch in the top-right corner.
-4.  Click the **"Load unpacked"** button.
-5.  Select the directory where you cloned or downloaded the project files (the one containing `manifest.json`).
-6.  The GitHub Prompter icon should appear in your toolbar!
+## 📦 Installation
 
-## 🤔 Why Use GitHub Prompter?
+**From Chrome Web Store:**
+1. Install from the [Chrome Web Store](your-link-here) *(Coming soon!)*
+2. Pin to your toolbar for easy access
 
-*   **Efficiency:** Quickly grab code/text from multiple files without cloning the whole repo.
-*   **Context:** Get file contents formatted with their paths, ready for AI prompts, documentation, or local notes.
-*   **Simplicity:** Easy-to-use interface focused solely on browsing and copying files.
+**For Development:**
+1. Clone this repo
+2. Open `chrome://extensions/`
+3. Enable Developer mode
+4. Click "Load unpacked" and select the project folder
+
+## 💡 Why GitHub Prompter?
+
+- **Save time** - No more manual copying of multiple files
+- **Better AI responses** - Properly formatted code with file paths gives AI tools better context
+- **Stay in flow** - Get answers about code without switching between multiple tabs and tools
 
 ---
 
-Happy Prompting! ✨
+Happy prompting! 🎉 Go build amazing things with AI!
