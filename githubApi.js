@@ -79,7 +79,13 @@ async function fetchFileContent(owner, repo, path, branch) {
   );
 
   const data = await handleApiResponse(response);
-  return atob(data.content); // Decode base64 content
+
+  try {
+    return atob(data.content);
+  } catch (error) {
+    console.error('Error decoding file content:', error);
+    return null;
+  }
 }
 
 export {
