@@ -68,4 +68,12 @@ document.addEventListener('DOMContentLoaded', function() {
       statusMessage.className = 'status-message';
     }, 3000);
   }
+
+  // Add keyboard shortcut for saving (Ctrl+S or Cmd+S)
+  document.addEventListener('keydown', function(event) {
+    if (event.ctrlKey && event.key === 's') {
+      event.preventDefault(); // Prevent the browser's default save action
+      saveButton.click(); // Trigger the save button click
+    }
+  });
 }); 
