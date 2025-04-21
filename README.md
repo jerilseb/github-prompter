@@ -22,8 +22,8 @@ Since Github API can hit the rate limits pretty easily, the extension allows you
 
 Need to access private repos or avoid rate limits? Add a GitHub token:
 
-1. Click the **⚙️ icon** in the extension popup
-2. Generate a token from [GitHub Developer Settings](https://github.com/settings/tokens)
+1. Click the **⚙️ icon** in the popup to open the extension options page
+2. Follow the instructions there to grab a Github Token
 3. Paste your token and save!
 
 ## 📦 Installation
