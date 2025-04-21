@@ -103,7 +103,6 @@ class Tree {
   static defaultOptions = {
     selectMode: 'checkbox', // 'checkbox', 'multiple', 'radio' (assuming 'checkbox' is the primary mode here)
     values: [],
-    disables: [],
     beforeLoad: null,
     loaded: null,
     closeDepth: null, // e.g., 1 means collapse level 1 and deeper
@@ -150,39 +149,12 @@ class Tree {
     this.options.onChange?.call(this); // Trigger onChange callback if defined
   }
 
-  get disables() {
-    // Filter all nodes that are disabled
-    return Object.values(this.nodesById)
-      .filter(node => node.disabled)
-      .map(node => node.id); // Return IDs of disabled nodes
-  }
-
-  set disables(newDisables) {
-    // Ensure unique values
-    const uniqueValues = uniq(newDisables);
-    this.emptyNodesDisable(); // Reset disabled state of currently disabled nodes
-    uniqueValues.forEach(value => this.setDisable(value, false)); // Set new disables without triggering update yet
-    this.updateLiElements(); // Update DOM for all changed nodes at once
-    // Note: onChange is typically not called for disable changes, but could be added if needed.
-  }
-
   get selectedNodes() {
     // Filter all nodes that are checked or half-checked
     return Object.values(this.nodesById)
       .filter(node => node.status === 1 || node.status === 2)
       .map(node => {
         // Return a clean copy without circular references
-        const { parent, children, ...nodeInfo } = node;
-        return nodeInfo;
-      });
-  }
-
-  get disabledNodes() {
-    // Filter all nodes that are disabled
-    return Object.values(this.nodesById)
-      .filter(node => node.disabled)
-      .map(node => {
-        // Return a clean copy without parent/children references if needed
         const { parent, children, ...nodeInfo } = node;
         return nodeInfo;
       });
@@ -200,7 +172,6 @@ class Tree {
       nodesById,
       leafNodesById,
       defaultValues,
-      defaultDisables,
     } = Tree.parseTreeData(data || []); // Use empty array if data is null/undefined
 
     this.treeNodes = treeNodes;
@@ -210,15 +181,10 @@ class Tree {
 
     this.render(this.treeNodes); // Render the tree structure
 
-    // Apply initial values and disables (prioritize options over data attributes)
+    // Apply initial values (prioritize options over data attributes)
     const initialValues = this.options.values?.length ? this.options.values : defaultValues;
     if (initialValues.length) {
       this.values = initialValues; // Use the setter
-    }
-
-    const initialDisables = this.options.disables?.length ? this.options.disables : defaultDisables;
-    if (initialDisables.length) {
-      this.disables = initialDisables; // Use the setter
     }
 
 
@@ -294,8 +260,8 @@ class Tree {
 
   onItemClick(id) {
     const node = this.nodesById[id];
-    if (!node || node.disabled) {
-      return; // Do nothing if node doesn't exist or is disabled
+    if (!node) {
+      return; // Do nothing if node doesn't exist
     }
 
     // Use the public setter which handles propagation and updates
@@ -360,7 +326,7 @@ class Tree {
    */
   setValue(value, updateDOM = true) {
     const node = this.nodesById[value];
-    if (!node || node.disabled) return; // Ignore if node not found or disabled
+    if (!node) return; // Ignore if node not found
 
     // Determine the new status: 0 (unchecked) if currently checked/half-checked, 2 (checked) otherwise
     const newStatus = (node.status === 1 || node.status === 2) ? 0 : 2;
@@ -377,33 +343,6 @@ class Tree {
     }
   }
 
-  /**
-   * Sets the disabled state of a single node and propagates changes.
-   * @param {string|number} value - The ID of the node to disable/enable.
-   * @param {boolean} [isDisabled=true] - True to disable, false to enable.
-   * @param {boolean} [updateDOM=true] - Whether to immediately trigger DOM updates.
-   */
-  setDisable(value, isDisabled = true, updateDOM = true) {
-    const node = this.nodesById[value];
-    if (!node) return;
-
-    if (node.disabled !== isDisabled) {
-      node.disabled = isDisabled;
-      this.markWillUpdateNode(node);
-      // If disabling, we might need to update parent status if it becomes fully disabled.
-      // If enabling, we might need to update parent status if it's no longer fully disabled.
-      // Walk up needs to handle the 'disabled' state logic correctly.
-      this.walkUp(node, 'disabled');
-      // Propagate disabled state down (children inherit disabled state)
-      this.walkDown(node, 'disabled');
-    }
-
-    if (updateDOM) {
-      this.updateLiElements();
-    }
-  }
-
-
   // --- State Resetting ---
 
   emptyNodesCheckStatus() {
@@ -411,8 +350,7 @@ class Tree {
     const selectedIds = Object.keys(this.getSelectedNodesById());
     selectedIds.forEach(id => {
       const node = this.nodesById[id];
-      // Only reset status if the node is not disabled
-      if (node && !node.disabled && node.status !== 0) {
+      if (node && node.status !== 0) {
         node.status = 0;
         this.markWillUpdateNode(node);
         // We need to walk up from *each* reset node to potentially reset parent states too
@@ -420,22 +358,6 @@ class Tree {
       }
     });
     // Note: No immediate DOM update here, it happens after setting new values.
-  }
-
-  emptyNodesDisable() {
-    // Get IDs of currently disabled nodes
-    const disabledIds = Object.keys(this.getDisabledNodesById());
-    disabledIds.forEach(id => {
-      const node = this.nodesById[id];
-      if (node && node.disabled) {
-        node.disabled = false;
-        this.markWillUpdateNode(node);
-        // Propagate enable state up and down
-        this.walkUp(node, 'disabled');
-        this.walkDown(node, 'disabled');
-      }
-    });
-    // Note: No immediate DOM update here, it happens after setting new disables.
   }
 
   // --- Internal Helpers ---
@@ -450,18 +372,6 @@ class Tree {
       }
     }
     return selected;
-  }
-
-  getDisabledNodesById() {
-    // Helper to get a map of nodes with disabled = true
-    const disabledMap = {};
-    for (const id in this.nodesById) {
-      const node = this.nodesById[id];
-      if (node.disabled) {
-        disabledMap[id] = node;
-      }
-    }
-    return disabledMap;
   }
 
 
@@ -490,13 +400,6 @@ class Tree {
     } else if (node.status === 2) {
       classList.add('treejs-node__checked');
     }
-
-    // Update disabled class
-    if (node.disabled) {
-      classList.add('treejs-node__disabled');
-    } else {
-      classList.remove('treejs-node__disabled');
-    }
   }
 
   // --- Propagation Logic ---
@@ -515,24 +418,22 @@ class Tree {
       let newStatus = 0; // Default to unchecked
       let checkedCount = 0;
       let halfCheckedCount = 0;
-      const relevantChildren = parent.children.filter(child => !child.disabled); // Only consider non-disabled children for status propagation
+      const allChildren = parent.children;
 
-      if (relevantChildren.length > 0) {
-        relevantChildren.forEach(child => {
+      if (allChildren.length > 0) {
+        allChildren.forEach(child => {
           if (child.status === 2) checkedCount++;
           else if (child.status === 1) halfCheckedCount++;
         });
 
-        if (checkedCount === relevantChildren.length) {
-          newStatus = 2; // All non-disabled children checked
+        if (checkedCount === allChildren.length) {
+          newStatus = 2; // All children checked
         } else if (checkedCount > 0 || halfCheckedCount > 0) {
           newStatus = 1; // Some checked or half-checked
         } else {
-          newStatus = 0; // All non-disabled children unchecked
+          newStatus = 0; // All children unchecked
         }
       } else {
-        // If all children are disabled, parent status could arguably be 0 or inherit?
-        // Let's stick to 0 for simplicity unless specific behavior is needed.
         newStatus = 0;
       }
 
@@ -540,17 +441,6 @@ class Tree {
       // Update parent only if status changed
       if (parent.status !== newStatus) {
         parent.status = newStatus;
-        needsUpdate = true;
-      }
-
-    } else if (changeState === 'disabled') {
-      // Calculate parent disabled state based on children
-      // A parent is disabled *only if* all its children are disabled.
-      const allChildrenDisabled = parent.children.every(child => child.disabled);
-
-      // Update parent only if disabled state changed
-      if (parent.disabled !== allChildrenDisabled) {
-        parent.disabled = allChildrenDisabled;
         needsUpdate = true;
       }
     }
@@ -569,12 +459,7 @@ class Tree {
     }
 
     node.children.forEach(child => {
-      // Skip propagation if the child is independently disabled when changing status
-      if (changeState === 'status' && child.disabled) {
-        return;
-      }
-
-      // Propagate the state change (status or disabled)
+      // Propagate the state change
       if (child[changeState] !== node[changeState]) {
         child[changeState] = node[changeState];
         this.markWillUpdateNode(child);
@@ -604,14 +489,14 @@ class Tree {
   /**
    * Parses the raw tree data into internal node structures.
    * @param {Array<object>} data - The raw tree data array.
-   * @returns {{treeNodes: Array, nodesById: object, leafNodesById: object, defaultValues: Array, defaultDisables: Array}}
+   * @returns {{treeNodes: Array, nodesById: object, leafNodesById: object, defaultValues: Array}}
    */
   static parseTreeData(data) {
     const treeNodes = deepClone(data); // Deep clone to avoid modifying original data
     const nodesById = {};
     const leafNodesById = {};
     const defaultValues = [];
-    const defaultDisables = [];
+
 
     // Recursive function to process nodes
     const walkTree = (nodes, parent = null) => {
@@ -623,14 +508,11 @@ class Tree {
 
         // Initialize default properties if missing
         node.status = node.status ?? 0; // 0: unchecked, 1: half-checked, 2: checked
-        node.disabled = node.disabled ?? false;
         node.checked = node.checked ?? false; // Keep original checked for initial values
 
         nodesById[node.id] = node; // Map node by ID
 
-        // Collect initial values/disables based on data attributes
         if (node.checked) defaultValues.push(node.id);
-        if (node.disabled) defaultDisables.push(node.id);
 
         if (parent) {
           node.parent = parent; // Set parent reference
@@ -650,7 +532,7 @@ class Tree {
     // After walking, perform initial status propagation based on default checked states
     // This ensures parent nodes reflect the initial state of their children.
     Object.values(nodesById).forEach(node => {
-      if (node.checked && !node.disabled) { // If initially checked and not disabled
+      if (node.checked) { // If initially checked
         // Temporarily set status to 2 to trigger walkUp correctly
         const initialStatus = node.status; // Store original status if needed elsewhere
         node.status = 2;
@@ -669,7 +551,6 @@ class Tree {
       nodesById,
       leafNodesById,
       defaultValues: uniq(defaultValues), // Ensure unique default values
-      defaultDisables: uniq(defaultDisables), // Ensure unique default disables
     };
   }
 
@@ -728,6 +609,10 @@ class Tree {
       li.appendChild(placeholder);
     }
 
+    if (node.ignored) {
+      li.classList.add('treejs-node__ignored');
+    }
+
     // Add checkbox span
     const checkbox = document.createElement('span');
     checkbox.classList.add('treejs-checkbox');
@@ -742,8 +627,6 @@ class Tree {
 
     // Store node ID directly on the element for easy retrieval
     li.nodeId = node.id;
-
-    // Apply initial state classes (checked, disabled) - handled by updateLiElement after render now.
 
     return li;
   }

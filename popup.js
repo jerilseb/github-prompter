@@ -115,7 +115,6 @@ async function initializePopup() {
       // Then get the tree with recursive option
       const rawTreeData = await fetchRepoTree(owner, repo, branch);
       const treeData = processGitTree(rawTreeData.tree);
-
       // Convert to tree format and display
       showTreeView(treeData, currentRepoData);
       repoInfoDiv.textContent = `${owner}/${repo} (${branch})`;
@@ -226,6 +225,7 @@ async function initializePopup() {
 
       return Object.values(node).map(item => ({
         id: item.id,
+        ignored: ignoreRegexes.some(regex => regex.test(item.id)),
         text: item.text,
         // Ensure children is an empty array for files, otherwise convert recursively
         children: item.type === 'directory' && item.children ? convertToTreeFormat(item.children) : [],
@@ -251,6 +251,7 @@ async function initializePopup() {
     const rootNode = {
       id: 'root',
       text: `${repository.owner}/${repository.name}`,
+      ignored: false,
       children: treeData,
       attributes: {
         type: 'directory'
@@ -302,11 +303,7 @@ async function initializePopup() {
     const selectedFileNodes = selectedNodes.filter(node =>
       node.attributes && node.attributes.type === 'file'
     );
-    const filteredNodes = selectedFileNodes.filter(node => {
-      const filePath = node.id; // Assuming node.id is the full path
-      return !ignoreRegexes.some(regex => regex.test(filePath));
-    });
-
+    const filteredNodes = selectedFileNodes.filter(node => !node.ignored);
     const count = filteredNodes.length;
     const ignoredCount = selectedFileNodes.length - count;
 
