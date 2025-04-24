@@ -316,11 +316,7 @@ async function initializePopup() {
     );
 
     // --- Filter selected files based on ignore patterns ---
-    const filteredNodes = selectedNodes.filter(node => {
-      const filePath = node.id; // Assuming node.id is the full path
-      return !isIgnored(filePath, ignoreRegexes);
-    });
-
+    const filteredNodes = selectedNodes.filter(node => !isIgnored(node.id, ignoreRegexes));
     const ignoredCount = selectedNodes.length - filteredNodes.length;
 
     // Show fetching progress state (spinner visible initially)
