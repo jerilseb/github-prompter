@@ -70,20 +70,27 @@ async function initializePopup() {
     }
   }
 
+  // --- Function to display errors consistently ---
+  function showError(message) {
+    treeContainer.innerHTML = `
+      <div class="output-container">
+        <div class="error-message">
+          ${message}
+        </div>
+      </div>
+    `;
+    treeContainer.style.display = 'flex'; // Show error message container
+    loadingIndicator.style.display = 'none';
+    fileActionsDiv.style.display = 'none'; // Hide actions on error
+    fetchProgressDiv.style.display = 'none'; // Hide progress on error
+    repoInfoDiv.textContent = 'Error';
+  }
+
   // Function to fetch and display the repository tree
   async function loadRepository(url) {
     const match = url.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\/tree\/([^\/]+))?/);
     if (!match) {
-      treeContainer.innerHTML = `
-        <div class="output-container">
-          <div class="error-message">
-            Not a valid GitHub repository URL. Please navigate to a repository page (e.g., https://github.com/owner/repo).
-          </div>
-        </div>
-      `;
-      loadingIndicator.style.display = 'none';
-      fileActionsDiv.style.display = 'none'; // Hide actions bar on error
-      fetchProgressDiv.style.display = 'none'; // Explicitly hide fetch progress too
+      showError("Not a valid GitHub repository URL. Please navigate to a repository page (e.g., https://github.com/owner/repo).");
       return;
     }
 
@@ -121,17 +128,7 @@ async function initializePopup() {
 
     } catch (error) {
       console.error('Error fetching repository:', error);
-
-      treeContainer.innerHTML = `
-        <div class="output-container">
-          <div class="error-message">
-            ${error.message}
-          </div>
-        </div>
-      `;
-      treeContainer.style.display = 'flex'; // Show error message container
-      repoInfoDiv.textContent = 'Error';
-      fileActionsDiv.style.display = 'none'; // Keep actions hidden on error
+      showError(error.message); // Use the centralized error handler
     } finally {
       loadingIndicator.style.display = 'none';
     }
@@ -285,15 +282,7 @@ async function initializePopup() {
 
     } catch (error) {
       console.error('Error initializing tree:', error);
-      treeContainer.innerHTML = `
-        <div class="output-container">
-          <div class="error-message">
-            ${error.message}
-          </div>
-        </div>
-      `;
-      treeContainer.style.display = 'flex'; // Show error message container
-      fileActionsDiv.style.display = 'none';
+      showError(error.message); // Use the centralized error handler
     }
   }
 
