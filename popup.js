@@ -16,7 +16,7 @@ async function initializePopup() {
   
   try {
     const result = await chrome.storage.sync.get("ignorePatterns");
-    if (result.ignorePatterns) {
+    if (result?.ignorePatterns) {
       ignoreRegexes = parseIgnoreFile(result.ignorePatterns);
     }
   } catch (error) {
