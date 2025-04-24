@@ -318,7 +318,7 @@ async function initializePopup() {
     // --- Filter selected files based on ignore patterns ---
     const filteredNodes = selectedNodes.filter(node => {
       const filePath = node.id; // Assuming node.id is the full path
-      return !ignoreRegexes.some(regex => regex.test(filePath));
+      return !isIgnored(filePath, ignoreRegexes);
     });
 
     const ignoredCount = selectedNodes.length - filteredNodes.length;
