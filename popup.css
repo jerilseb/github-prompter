@@ -45,10 +45,6 @@ html {
   margin-left: auto;
 }
 
-.clone-section {
-  display: none;
-}
-
 #loading-indicator,
 #fetch-progress,
 .output-container {
@@ -342,33 +338,10 @@ button.primary:hover {
   overflow: hidden;
 }
 
-.selected-paths {
-  flex: 1;
-  background: #ffffff;
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #e1e4e8;
-  white-space: pre-wrap;
-  word-break: break-all;
-  overflow-y: auto;
-  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  margin-bottom: 16px;
-}
-
 #loading-indicator {
   text-align: center;
   padding: 20px;
   color: #586069;
-}
-
-.button-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 16px 0;
-  padding: 0 16px;
 }
 
 #tree-container {
@@ -376,51 +349,6 @@ button.primary:hover {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 8px;
-}
-
-.success-notification {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #2ea44f;
-  color: white;
-  padding: 16px 32px;
-  border-radius: 8px;
-  font-size: 16px;
-  z-index: 1002;
-  text-align: center;
-  min-width: 220px;
-}
-
-.token-input {
-  margin-bottom: 10px;
-}
-
-.token-input input {
-  width: 100%;
-  padding: 5px 10px;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.token-help {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #586069;
-}
-
-.help-link {
-  color: #0366d6;
-  text-decoration: none;
-}
-
-.help-link:hover {
-  text-decoration: underline;
 }
 
 .tooltip {

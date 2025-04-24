@@ -88,7 +88,9 @@ async function initializePopup() {
 
   // Function to fetch and display the repository tree
   async function loadRepository(url) {
-    const match = url.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\/tree\/([^\/]+))?/);
+    // Handle URLs with query parameters and fragments
+    const cleanUrl = url.split(/[?#]/)[0]; // Remove query params and fragments
+    const match = cleanUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\/tree\/([^\/]+))?/);
     if (!match) {
       showError("Not a valid GitHub repository URL. Please navigate to a repository page (e.g., https://github.com/owner/repo).");
       return;
