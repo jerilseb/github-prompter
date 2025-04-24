@@ -1,4 +1,5 @@
-import { fetchRepoInfo, fetchRepoTree, fetchFileContent } from './githubApi.js';
+import { fetchRepoInfo, fetchRepoTree, fetchFileContent } from './github-api.js';
+import { parseIgnoreFile, isIgnored } from './ignore-utils.js';
 
 async function initializePopup() {
   const treeContainer = document.getElementById('tree-container');
@@ -11,21 +12,16 @@ async function initializePopup() {
 
   let currentTree = null; // Store tree instance
   let currentRepoData = null; // Store current repo { owner, name, branch }
-
-  let ignorePatterns = [];
+  let ignoreRegexes = [];
+  
   try {
     const result = await chrome.storage.sync.get("ignorePatterns");
     if (result.ignorePatterns) {
-      ignorePatterns = result.ignorePatterns
-        .split('\n') // Split by newline
-        .map(p => p.trim()) // Trim whitespace
-        .filter(p => p); // Remove empty lines
+      ignoreRegexes = parseIgnoreFile(result.ignorePatterns);
     }
   } catch (error) {
     console.error("Error fetching ignore patterns:", error);
   }
-
-  const ignoreRegexes = ignorePatterns.map(globToRegex).filter(Boolean); // Filter out nulls from invalid patterns
 
   // Add settings button click handler
   settingsBtn.addEventListener('click', function () {
@@ -39,36 +35,6 @@ async function initializePopup() {
     loadRepository(url); // Automatically try to load repo from current tab
   });
 
-  // --- Helper function to convert simple glob patterns to regex ---
-  // Handles patterns like *.js, /dir/file, dir/
-  function globToRegex(glob) {
-    // Escape special regex characters, except *, ?, and /
-    let regexString = glob.replace(/([.+^$(){}|[\\]])/g, '\\$1');
-    // Convert glob wildcards to regex
-    regexString = regexString.replace(/\*/g, '[^/]*'); // * matches anything except /
-    regexString = regexString.replace(/\?/g, '[^/]'); // ? matches any single character except /
-
-    // Handle directory matching (e.g., 'dist/')
-    if (regexString.endsWith('/')) {
-      regexString += '.*'; // Match anything inside the directory
-    } else {
-      // If not ending with /, make sure it matches the end of the string or a /
-      // regexString += '($|\\/)'; // Let's test without this first, might be too strict
-    }
-
-    // Ensure the pattern matches from the beginning of the path segment
-    // or the start of the string
-    // Handle cases like *.js matching file.js and dir/file.js
-    // This makes it behave more like .gitignore matching
-    regexString = '(^|\\/)' + regexString;
-
-    try {
-      return new RegExp(regexString);
-    } catch (e) {
-      console.warn(`Invalid glob pattern "${glob}":`, e);
-      return null; // Return null for invalid patterns
-    }
-  }
 
   // --- Function to display errors consistently ---
   function showError(message) {
@@ -224,7 +190,7 @@ async function initializePopup() {
 
       return Object.values(node).map(item => ({
         id: item.id,
-        ignored: ignoreRegexes.some(regex => regex.test(item.id)),
+        ignored: isIgnored(item.id, ignoreRegexes),
         text: item.text,
         // Ensure children is an empty array for files, otherwise convert recursively
         children: item.type === 'directory' && item.children ? convertToTreeFormat(item.children) : [],
