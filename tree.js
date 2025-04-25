@@ -101,10 +101,7 @@ function expandFromRoot(tree, node) {
 class Tree {
   // Default options as a static property or defined within constructor
   static defaultOptions = {
-    selectMode: 'checkbox', // 'checkbox', 'multiple', 'radio' (assuming 'checkbox' is the primary mode here)
     values: [],
-    beforeLoad: null,
-    loaded: null,
     closeDepth: null, // e.g., 1 means collapse level 1 and deeper
     onChange: null,   // Added onChange based on its usage
     data: []          // Added data based on its usage
@@ -164,7 +161,6 @@ class Tree {
 
   init(data) {
     console.time('init');
-    this.options.beforeLoad?.call(this); // Call beforeLoad hook
 
     // Parse data using the static method
     const {
@@ -187,8 +183,6 @@ class Tree {
       this.values = initialValues; // Use the setter
     }
 
-
-    this.options.loaded?.call(this); // Call loaded hook
     console.timeEnd('init');
   }
 
