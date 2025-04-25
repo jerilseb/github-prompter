@@ -16,9 +16,9 @@ https://github.com/user-attachments/assets/eead97c0-5b94-42bb-8ea2-1893bb4148d4
 3. **Click "Copy Selected Files"** to copy them in Markdown format
 4. **Paste directly into Gemini, ChatGPT, Claude, or any other AI assistant**
 
-Since Github API can hit the rate limits pretty easily, the extension allows you enter a Github Personal Access Token (PAT) in the options page. The token is stored securely in your browser's local storage and is never transmitted anywhere except directly to GitHub's API. For public repositories, you can create a token with no permissions at all. If you need to access private repositories, you'll only need to grant the token repository read access. Detailed instructions on how to generate the token can be found in the extension's option page.
+Because of Github API [rate limits](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28), only 60 files can be copied per hour. To increase the limit to 5000 files per hour, the extension allows you enter a Github Personal Access Token (PAT) in the options page. The token is stored securely in your browser's local storage and is never transmitted anywhere except directly to GitHub's API. For working with public repositories, you can create a token with no permissions at all. If you need to access private repositories, you'll only need to grant the token repository 'read' access. Detailed instructions on how to generate the token can be found in the extension's option page.
 
-> **Note:** Performance may be a bit sluggish when working with large repositories.
+> **Note:** Performance will be a bit sluggish when working with large repositories (> 3000 files).
 
 ## ⚙️ Configuration
 
