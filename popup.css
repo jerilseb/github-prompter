@@ -1,36 +1,37 @@
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  padding: 0;
-  position: relative;
-  height: 100%;
-  overflow: hidden;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  max-height: 600px;
-  min-height: 480px;
-  width: 400px;
+:root {
+  --border: 1px solid #e1e4e8;
+  --bg-light: #fafbfc;
 }
 
-html {
+html,
+body {
   height: 100%;
-  overflow: hidden;
   margin: 0;
-  display: flex;
-  flex-direction: column;
+  width: 400px;
   max-height: 600px;
   min-height: 480px;
-  width: 400px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: var(--border);
+  flex-shrink: 0;
 }
 
 .file-actions {
-  z-index: 10;
-  border-bottom: 1px solid #e1e4e8;
   display: flex;
   justify-content: flex-end;
   align-items: center;
   padding: 8px;
-  border-top: 1px solid #e1e4e8;
+  border-top: var(--border);
+  border-bottom: var(--border);
   background: #f6f8fa;
   flex-shrink: 0;
 }
@@ -38,18 +39,13 @@ html {
 #tree-container {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 5px;
+  padding: 8px;
 }
 
-#copy-files-btn {
-  margin-left: auto;
-}
-
-#loading-indicator,
-#fetch-progress,
-.output-container {
+.loading-indicator,
+.fetch-progress {
   flex-grow: 1;
-  display: none; /* Default to hidden */
+  display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -57,41 +53,17 @@ html {
   padding: 20px;
 }
 
-/* Keep the specific display: none for the old class selector if needed, */
-/* although it should be redundant now if only the ID is used */
-.fetch-progress {
-  display: none;
-}
-
-.output-container pre {
-  max-height: 200px;
-  overflow: auto;
-  width: 100%;
-  text-align: left;
-}
-
-label {
-  display: inline-flex !important;
-  align-items: center !important;
-}
-
-.header {
-  padding: 8px 10px;
-  border-bottom: 1px solid #e1e4e8;
-  display: flex;
-  justify-content: space-between;
+.output-container {
+  flex-grow: 1;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  flex-shrink: 0;
+  text-align: center;
+  padding: 20px;
 }
 
 .repo-info {
-  font-weight: normal;
   font-size: 14px;
-}
-
-.controls {
-  display: flex;
-  gap: 8px;
 }
 
 button {
@@ -99,197 +71,22 @@ button {
   font-size: 12px;
   font-weight: 500;
   border-radius: 6px;
-  border: 1px solid #e1e4e8;
-  background-color: #fafbfc;
+  border: var(--border);
+  background: var(--bg-light);
   cursor: pointer;
-}
-
-button:hover {
-  background-color: #f3f4f6;
-}
-
-.btn {
-  display: inline-block;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-  text-align: center;
-  text-decoration: none;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s;
-  width: 100%;
-}
-
-.btn-primary,
-button.primary {
-  color: #ffffff;
-  background-color: #2ea44f;
-  border-color: rgba(27, 31, 35, 0.15);
-}
-
-.btn-primary:hover,
-button.primary:hover {
-  background-color: #2c974b;
-}
-
-.tree-container {
-  flex: 1;
-  overflow: hidden;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.empty-state {
-  padding: 40px 20px;
-  text-align: center;
-  color: #586069;
-}
-
-.empty-state p {
-  margin-bottom: 20px;
-}
-
-.clone-section {
-  padding: 16px;
-  border-bottom: 1px solid #e1e4e8;
-  flex-shrink: 0;
-}
-
-.repo-url {
-  display: flex;
-  margin-bottom: 10px;
-}
-
-.repo-url input {
-  flex-grow: 1;
-  padding: 5px 10px;
-  border: 1px solid #e1e4e8;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.loading {
-  text-align: center;
-  padding: 30px;
-  color: #586069;
-  flex-shrink: 0;
-}
-
-.spinner {
-  border: 3px solid #f3f3f3;
-  border-radius: 50%;
-  border-top: 3px solid #2188ff;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 15px auto;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.file-icon,
-.dir-icon {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  margin-right: 4px;
-  vertical-align: middle;
-}
-
-.dir-icon {
-  background-color: #0366d6;
-}
-
-.file-icon {
-  background-color: #959da5;
-}
-
-.tree-line {
-  color: #0366d6;
-}
-
-.dir-name {
-  color: #0366d6;
-  font-weight: bold;
-}
-
-.file-name {
-  color: #24292e;
-}
-
-.selection-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.selection-info {
-  font-size: 12px;
-  color: #586069;
-}
-
-.fetch-progress {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 32px 40px 28px 40px;
-  /* border-radius: 18px; */
-  /* box-shadow: 0 6px 32px 0 rgba(30, 60, 120, 0.13), 0 1.5px 6px 0 rgba(30, 60, 120, 0.07); */
-  /* border: 1.5px solid #e3eaf5; */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 280px;
-  min-height: 120px;
-  z-index: 1001;
-  gap: 10px;
-}
-
-.fetch-progress .spinner {
-  margin-bottom: 12px;
-  width: 24px;
-  height: 24px;
-  border-width: 4px;
-  border-color: #b3d3fa #e3eaf5 #e3eaf5 #e3eaf5;
-}
-
-.fetch-progress-text {
-  font-size: 14px;
-  color: #1a2a3a;
-  text-align: center;
-  max-width: 95%;
-  margin-bottom: 0;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  white-space: pre-line;
+  transition: background-color 0.2s;
 }
 
 .icon-button {
   padding: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #24292e;
-  background: transparent;
+  display: grid;
+  place-items: center;
   border: none;
+  background: transparent;
 }
 
 .icon-button:hover {
-  background-color: #e1e4e8;
+  background: #e1e4e8;
 }
 
 .icon-button svg {
@@ -297,15 +94,35 @@ button.primary:hover {
   height: 16px;
 }
 
+.btn {
+  display: inline-block;
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  color: #fff;
+  background: #2ea44f;
+  border-color: rgba(27, 31, 35, 0.15);
+}
+
+.btn-primary:hover {
+  background: #2c974b;
+}
+
 .btn-secondary {
-  color: #24292e;
-  background-color: #fafbfc;
+  background: var(--bg-light);
   border-color: rgba(27, 31, 35, 0.15);
 }
 
 .btn-secondary:hover {
-  background-color: #f3f4f6;
-  border-color: rgba(27, 31, 35, 0.15);
+  background: #f3f4f6;
 }
 
 .btn:disabled {
@@ -313,63 +130,99 @@ button.primary:hover {
   cursor: not-allowed;
 }
 
+.spinner {
+  width: 20px;
+  height: 20px;
+  margin: 0 auto 15px;
+  border: 3px solid #f3f3f3;
+  border-radius: 50%;
+  border-top-color: #2188ff;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Tree */
+.tree-container {
+  flex: 1;
+  overflow: hidden;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dir-name {
+  color: #0366d6;
+  font-weight: 700;
+}
+
+.file-name {
+  color: #24292e;
+}
+
+.file-icon,
+.dir-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.dir-icon {
+  background: #0366d6;
+}
+
+.file-icon {
+  background: #959da5;
+}
+
+/* Error */
 .error-message {
-  background-color: #ffebe9;
-  border: 1px solid rgba(255, 129, 130, 0.4);
-  color: #cf222e;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
   padding: 12px;
-  border-radius: 6px;
   margin: 8px 0;
   font-size: 14px;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  color: #cf222e;
+  background: #ffebe9;
+  border: 1px solid rgba(255, 129, 130, 0.4);
+  border-radius: 6px;
   white-space: pre-line;
 }
 
-.output-container {
-  flex: 1;
-  padding: 16px;
-  background: #f6f8fa;
-  border-radius: 6px;
-  margin: 16px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-#loading-indicator {
-  text-align: center;
-  padding: 20px;
-  color: #586069;
-}
-
-#tree-container {
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 8px;
-}
-
-.tooltip {
-  font-size: 11px;
-  color: #6a737d;
+/* Progress overlay */
+.fetch-progress {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 280px;
+  min-height: 120px;
+  padding: 32px 40px 28px;
+  gap: 10px;
+  z-index: 1001;
 }
 
 #success-icon {
-  display: none; /* Hidden by default */
-  font-size: 2.5em; /* Make it larger */
-  color: #28a745; /* Success green color */
-  margin-bottom: 8px; /* Space below icon */
-  line-height: 1; /* Adjust line height */
+  display: none;
+  font-size: 2.5em;
+  color: #28a745;
+  line-height: 1;
 }
 
-/* Optional: Adjust spacing if needed when icon is shown */
 #fetch-progress-text {
   margin-top: 5px;
-}
-
-/* Optional: Center spinner if not already centered */
-#fetch-progress .spinner {
-    margin-bottom: 15px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  max-width: 95%;
+  color: #1a2a3a;
+  white-space: pre-line;
 }

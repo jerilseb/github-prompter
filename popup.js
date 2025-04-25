@@ -1,429 +1,251 @@
 import { fetchRepoInfo, fetchRepoTree, fetchFileContent } from './github-api.js';
 import { parseIgnoreFile, isIgnored } from './ignore-utils.js';
 
-async function initializePopup() {
-  const treeContainer = document.getElementById('tree-container');
-  const loadingIndicator = document.getElementById('loading-indicator');
-  const settingsBtn = document.getElementById('settings-btn');
-  const repoInfoDiv = document.getElementById('repo-info');
-  const fileActionsDiv = document.getElementById('file-actions');
-  const copyFilesBtn = document.getElementById('copy-files-btn');
-  const fetchProgressDiv = document.getElementById('fetch-progress');
+const el = {
+  treeContainer: document.getElementById('tree-container'),
+  loadingIndicator: document.getElementById('loading-indicator'),
+  settingsBtn: document.getElementById('settings-btn'),
+  repoInfo: document.getElementById('repo-info'),
+  fileActions: document.getElementById('file-actions'),
+  copyBtn: document.getElementById('copy-files-btn'),
+  fetchProgress: document.getElementById('fetch-progress'),
+  progressSpinner: document.querySelector('#fetch-progress .spinner'),
+  progressText: document.getElementById('fetch-progress-text'),
+  successIcon: document.getElementById('success-icon'),
+};
 
-  let currentTree = null; // Store tree instance
-  let currentRepoData = null; // Store current repo { owner, name, branch }
-  let ignoreRegexes = [];
-  
+const state = {
+  tree: null,        // Tree.js instance
+  repo: null,        // { owner, name, branch }
+  ignoreRegex: [],
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const result = await chrome.storage.sync.get("ignorePatterns");
-    if (result?.ignorePatterns) {
-      ignoreRegexes = parseIgnoreFile(result.ignorePatterns);
-    }
-  } catch (error) {
-    console.error("Error fetching ignore patterns:", error);
+    const { ignorePatterns } = await chrome.storage.sync.get('ignorePatterns');
+    if (ignorePatterns) state.ignoreRegex = parseIgnoreFile(ignorePatterns);
+  } catch (err) {
+    console.error('Failed to load ignore patterns', err);
   }
 
-  // Add settings button click handler
-  settingsBtn.addEventListener('click', function () {
-    chrome.runtime.openOptionsPage();
+  el.settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
+  el.copyBtn.addEventListener('click', copySelectedFiles);
+
+  chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+    if (tab?.url) loadRepository(tab.url);
+  });
+});
+
+
+const loadRepository = async (url) => {
+  const [clean] = url.split(/[?#]/); // remove query/hash
+  const match = clean.match(/https:\/\/github\.com\/([^/]+)\/([^/]+)(?:\/tree\/([^/]+))?/);
+
+  if (!match) {
+    return showError('Not a valid GitHub repository URL. Please navigate to a repository page (e.g., https://github.com/owner/repo).');
+  }
+
+  const [, owner, repo, branchFromUrl] = match;
+
+  switchView('loading');
+  el.repoInfo.textContent = `${owner}/${repo}`;
+
+  try {
+    const { default_branch } = await fetchRepoInfo(owner, repo);
+    state.repo = { owner, name: repo, branch: branchFromUrl || default_branch };
+
+    const rawTree = await fetchRepoTree(owner, repo, state.repo.branch);
+    const treeData = buildTree(rawTree.tree);
+
+    renderTree(treeData);
+    el.repoInfo.textContent = `${owner}/${repo} (${state.repo.branch})`;
+  } catch (err) {
+    console.error(err);
+    showError(err.message);
+  }
+};
+
+const switchView = (view) => {
+  const is = (v) => view === v;
+  el.loadingIndicator.style.display = is('loading') ? 'flex' : 'none';
+  el.treeContainer.style.display = is('tree') ? 'block' : 'none';
+  el.fileActions.style.display = is('tree') ? 'flex' : 'none';
+  el.fetchProgress.style.display = is('progress') ? 'flex' : 'none';
+};
+
+const showError = (message) => {
+  el.treeContainer.innerHTML = `
+    <div class="output-container">
+      <div class="error-message">${message}</div>
+    </div>`;
+  switchView('tree');
+};
+
+const updateCopyBtn = (selected) => {
+  const files = selected.filter((n) => n.attributes?.type === 'file');
+  const validFiles = files.filter((n) => !n.ignored);
+  const ignored = files.length - validFiles.length;
+
+  el.copyBtn.textContent = `Copy ${validFiles.length} File${validFiles.length !== 1 ? 's' : ''}${ignored ? ` (${ignored} ignored)` : ''}`;
+  el.copyBtn.disabled = validFiles.length === 0;
+};
+
+const buildTree = (items = []) => {
+  const root = {};
+
+  items.sort((a, b) => a.path.localeCompare(b.path));
+
+  items.forEach(({ path, type }) => {
+    const parts = path.split('/');
+    let node = root;
+
+    parts.forEach((part, i) => {
+      const fullPath = parts.slice(0, i + 1).join('/');
+      node[part] = node[part] || {
+        id: fullPath,
+        text: part,
+        type: 'directory',
+        children: {},
+      };
+
+      if (i === parts.length - 1 && type === 'blob') node[part].type = 'file';
+      node = node[part].children;
+    });
   });
 
-  copyFilesBtn.addEventListener('click', copyFiles);
-
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    const url = tabs[0].url;
-    loadRepository(url); // Automatically try to load repo from current tab
-  });
-
-
-  // --- Function to display errors consistently ---
-  function showError(message) {
-    treeContainer.innerHTML = `
-      <div class="output-container">
-        <div class="error-message">
-          ${message}
-        </div>
-      </div>
-    `;
-    treeContainer.style.display = 'flex'; // Show error message container
-    loadingIndicator.style.display = 'none';
-    fileActionsDiv.style.display = 'none'; // Hide actions on error
-    fetchProgressDiv.style.display = 'none'; // Hide progress on error
-    repoInfoDiv.textContent = 'Error';
-  }
-
-  // Function to fetch and display the repository tree
-  async function loadRepository(url) {
-    // Handle URLs with query parameters and fragments
-    const cleanUrl = url.split(/[?#]/)[0]; // Remove query params and fragments
-    const match = cleanUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\/tree\/([^\/]+))?/);
-    if (!match) {
-      showError("Not a valid GitHub repository URL. Please navigate to a repository page (e.g., https://github.com/owner/repo).");
-      return;
-    }
-
-    // Extract repository information
-    const owner = match[1];
-    const repo = match[2];
-    const specifiedBranch = match[3]; // Might be undefined
-
-    // Show loading indicator
-    treeContainer.innerHTML = ''; // Clear previous content
-    treeContainer.style.display = 'none';
-    fileActionsDiv.style.display = 'none'; // Hide actions while loading
-    fetchProgressDiv.style.display = 'none'; // Ensure progress is hidden
-    loadingIndicator.style.display = 'flex'; // Use flex for centering
-    repoInfoDiv.textContent = `${owner}/${repo}`;
-
-    try {
-      // First, get the repository info to get the default branch
-      const repoData = await fetchRepoInfo(owner, repo);
-      // Use specified branch from URL or fall back to default branch
-      const branch = specifiedBranch || repoData.default_branch;
-
-      currentRepoData = { owner, name: repo, branch }; // Store for later use
-
-      // // Get the commit SHA for the branch
-      // const branchData = await fetchBranchInfo(owner, repo, branch);
-      // const commitSha = branchData.commit.sha;
-
-      // Then get the tree with recursive option
-      const rawTreeData = await fetchRepoTree(owner, repo, branch);
-      const treeData = processGitTree(rawTreeData.tree);
-      // Convert to tree format and display
-      showTreeView(treeData, currentRepoData);
-      repoInfoDiv.textContent = `${owner}/${repo} (${branch})`;
-
-    } catch (error) {
-      console.error('Error fetching repository:', error);
-      showError(error.message); // Use the centralized error handler
-    } finally {
-      loadingIndicator.style.display = 'none';
-    }
-  }
-
-  // Process Git Tree data into hierarchical structure
-  function processGitTree(items) {
-    if (!Array.isArray(items)) {
-      console.error('Invalid items:', items);
-      return [];
-    }
-
-    const root = {};
-
-    // Sort items to ensure directories come before files and alphabetically
-    items.sort((a, b) => {
-      const aParts = a.path.split('/');
-      const bParts = b.path.split('/');
-
-      // Compare parent directories first
-      const minLength = Math.min(aParts.length, bParts.length);
-      for (let i = 0; i < minLength - 1; i++) {
-        if (aParts[i] !== bParts[i]) {
-          return aParts[i].localeCompare(bParts[i]);
-        }
-      }
-
-      // Prioritize directories ('tree') over files ('blob') at the same level
-      if (a.type === 'tree' && b.type === 'blob') {
-        // Check if they are in the same directory level before prioritizing type
-        if (aParts.length === bParts.length) return -1;
-      }
-      if (a.type === 'blob' && b.type === 'tree') {
-        if (aParts.length === bParts.length) return 1;
-      }
-
-      // Default to path comparison
-      return a.path.localeCompare(b.path);
+  const toTreeData = (obj) => Object.values(obj)
+    .map((item) => ({
+      id: item.id,
+      text: item.text,
+      ignored: isIgnored(item.id, state.ignoreRegex),
+      children: item.type === 'directory' ? toTreeData(item.children) : [],
+      attributes: { type: item.type },
+    }))
+    .sort((a, b) => {
+      if (a.attributes.type !== b.attributes.type) return a.attributes.type === 'directory' ? -1 : 1;
+      return a.text.localeCompare(b.text);
     });
 
+  return toTreeData(root);
+};
 
-    // Process each item into the tree structure
-    items.forEach(item => {
-      if (!item.path) {
-        console.warn('Skipping item without path:', item);
-        return;
-      }
+const renderTree = (treeData) => {
+  el.treeContainer.innerHTML = '<div id="repo-tree"></div>';
 
-      const parts = item.path.split('/');
-      let current = root;
-
-      // Build the path one level at a time
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        const isLastPart = i === parts.length - 1;
-        const currentPath = parts.slice(0, i + 1).join('/');
-
-        if (!current[part]) {
-          current[part] = {
-            id: currentPath, // Use full path as ID
-            text: part,
-            type: 'directory', // Assume directory initially
-            children: {}
-          };
-        }
-
-        if (isLastPart) {
-          // If it's the last part, set the correct type
-          current[part].type = item.type === 'tree' ? 'directory' : 'file';
-          // If it's a file, it shouldn't have children object
-          if (current[part].type === 'file') {
-            delete current[part].children;
-          }
-        }
-
-        // Move to the next level if not the last part
-        if (!isLastPart) {
-          // Ensure children object exists if we are traversing deeper
-          if (!current[part].children) {
-            current[part].children = {};
-          }
-          current = current[part].children;
-        }
-      }
-    });
-
-
-    // Convert the tree structure to Tree.js format
-    function convertToTreeFormat(node) {
-      if (!node || typeof node !== 'object') return [];
-
-      return Object.values(node).map(item => ({
-        id: item.id,
-        ignored: isIgnored(item.id, ignoreRegexes),
-        text: item.text,
-        // Ensure children is an empty array for files, otherwise convert recursively
-        children: item.type === 'directory' && item.children ? convertToTreeFormat(item.children) : [],
-        attributes: { type: item.type }
-      })).sort((a, b) => {
-        // Sort directories before files, then alphabetically
-        if (a.attributes.type === 'directory' && b.attributes.type === 'file') return -1;
-        if (a.attributes.type === 'file' && b.attributes.type === 'directory') return 1;
-        return a.text.localeCompare(b.text);
-      });
-    }
-
-    return convertToTreeFormat(root);
-  }
-
-  // Display the tree view
-  function showTreeView(treeData, repository) {
-    treeContainer.innerHTML = '<div id="repo-tree"></div>'; // Prepare container
-    treeContainer.style.display = 'block'; // Ensure container is visible
-    fileActionsDiv.style.display = 'flex'; // Show file actions bar
-
-    // Create root node
-    const rootNode = {
-      id: 'root',
-      text: `${repository.owner}/${repository.name}`,
-      ignored: false,
-      children: treeData,
-      attributes: {
-        type: 'directory'
-      }
-    };
-
-    // Initialize tree
-    try {
-      currentTree = new Tree('#repo-tree', {
-        data: [rootNode], // Pass the processed data directly
-        closeDepth: 1, // Start with top-level items expanded
-        loaded: function () {
-          // Add custom classes to nodes
-          const nodes = document.querySelectorAll('#repo-tree .tree-node');
-          nodes.forEach(node => {
-            const nodeData = this.getNodeById(node.getAttribute('data-id'));
-            if (nodeData && nodeData.attributes) {
-              node.classList.add(nodeData.attributes.type);
-            }
-          });
-          // Initial update of selection info
-          updateCopyButton(this.selectedNodes);
-        },
-        onChange: function () {
-          // Update selected files count and button state
-          updateCopyButton(this.selectedNodes);
-        }
-      });
-
-      // Removed Select All checkbox handler
-
-    } catch (error) {
-      console.error('Error initializing tree:', error);
-      showError(error.message); // Use the centralized error handler
-    }
-  }
-
-  // Update copy button text and state
-  function updateCopyButton(selectedNodes) {
-    if (!currentTree) return;
-    const selectedFileNodes = selectedNodes.filter(node =>
-      node.attributes && node.attributes.type === 'file'
-    );
-    const filteredNodes = selectedFileNodes.filter(node => !node.ignored);
-    const count = filteredNodes.length;
-    const ignoredCount = selectedFileNodes.length - count;
-
-    copyFilesBtn.textContent = `Copy ${count} File${count !== 1 ? 's' : ''}`;
-    if (ignoredCount > 0) {
-      copyFilesBtn.textContent += ` (${ignoredCount} ignored)`;
-    }
-    copyFilesBtn.disabled = count === 0;
-  }
-
-  // --- Helper function to display feedback and the Back button ---
-  function displayProgressFeedback(message, isSuccess = false) {
-    fetchProgressDiv.style.display = 'flex'; // Show progress area
-    treeContainer.style.display = 'none'; // Hide tree
-    fileActionsDiv.style.display = 'none'; // Hide actions
-    fetchProgressDiv.querySelector('.spinner').style.display = 'none'; // Hide spinner
-    const progressText = document.getElementById('fetch-progress-text');
-    const successIcon = document.getElementById('success-icon'); // Get the icon element
-
-    // Control icon visibility and content
-    successIcon.textContent = isSuccess ? '✓' : '';
-    successIcon.style.display = isSuccess ? 'block' : 'none';
-
-    progressText.textContent = message;
-
-    // Clear any previous buttons
-    const oldBackButton = fetchProgressDiv.querySelector('button');
-    if (oldBackButton) oldBackButton.remove();
-
-    // Add 'Back to Tree' button
-    const backButton = document.createElement('button');
-    backButton.textContent = 'Back to Tree';
-    backButton.className = 'btn btn-secondary';
-    backButton.style.marginTop = '16px';
-    backButton.onclick = () => {
-      fetchProgressDiv.style.display = 'none';
-      treeContainer.style.display = 'block';
-      fileActionsDiv.style.display = 'flex';
-      backButton.remove(); // Remove the button itself
-      progressText.textContent = ''; // Clear the progress text
-      document.getElementById('success-icon').style.display = 'none'; // Hide icon when going back
-    };
-    fetchProgressDiv.appendChild(backButton);
-  }
-
-  // --- Modified copy files button click handler ---
-  async function copyFiles() {
-    if (!currentTree || !currentRepoData) return;
-
-    // Get selected file nodes
-    const selectedNodes = currentTree.selectedNodes.filter(node =>
-      node.attributes && node.attributes.type === 'file'
-    );
-
-    // --- Filter selected files based on ignore patterns ---
-    const filteredNodes = selectedNodes.filter(node => !isIgnored(node.id, ignoreRegexes));
-    const ignoredCount = selectedNodes.length - filteredNodes.length;
-
-    // Show fetching progress state (spinner visible initially)
-    fileActionsDiv.style.display = 'none'; // Hide actions
-    treeContainer.style.display = 'none'; // Hide tree
-    fetchProgressDiv.style.display = 'flex'; // Show progress indicator
-    fetchProgressDiv.querySelector('.spinner').style.display = ''; // Ensure spinner IS visible
-    const progressText = document.getElementById('fetch-progress-text');
-    document.getElementById('success-icon').style.display = 'none'; // Ensure icon is hidden when fetching starts
-    progressText.textContent = `Fetching ${filteredNodes.length} file contents...`;
-    // Clear any previous buttons in progress div (e.g., from error state)
-    const oldBackButton = fetchProgressDiv.querySelector('button');
-    if (oldBackButton) oldBackButton.remove();
-
-    try {
-      // Check if file tree should be included
-      const includeFileTreeResult = await chrome.storage.sync.get("includeFileTree");
-      const includeFileTree = includeFileTreeResult.includeFileTree || false;
-
-      // Generate file tree if needed
-      let fileTreeContent = '';
-      if (includeFileTree) {
-        // Extract file paths from the selected files instead of all files
-        const selectedFilePaths = filteredNodes.map(node => node.id);
-        fileTreeContent = generateFileTreeStructure(currentRepoData.name, selectedFilePaths);
-      }
-
-      // Fetch contents for each FILTERED file
-      const fileContents = await Promise.all(filteredNodes.map(async (node) => {
-        const content = await fetchFileContent(currentRepoData.owner, currentRepoData.name, node.id, currentRepoData.branch);
-        return `## File: ${node.id}\n\`\`\`\n${content}\n\`\`\``;
-      }));
-
-      // Combine file tree and file contents
-      let combinedContent = '';
-      if (includeFileTree && fileTreeContent) {
-        combinedContent = `## File Tree Structure\n\n\`\`\`\n${fileTreeContent}\n\`\`\`\n\n${fileContents.join('\n\n')}`;
-      } else {
-        combinedContent = fileContents.join('\n\n');
-      }
-
-      await navigator.clipboard.writeText(combinedContent);
-
-      // Show success feedback in the progress div using the helper
-      const successMessage = `Successfully copied ${filteredNodes.length} files to clipboard!${ignoredCount > 0 ? ` (${ignoredCount} ignored)` : ''}`;
-      displayProgressFeedback(successMessage, true); // Indicate success
-
-    } catch (error) {
-      console.error('Error fetching files:', error);
-      displayProgressFeedback(error.message, false); // Not a success case
-    }
+  const rootNode = {
+    id: 'root',
+    text: `${state.repo.owner}/${state.repo.name}`,
+    ignored: false,
+    children: treeData,
+    attributes: { type: 'directory' },
   };
 
-  // Function to generate file tree structure in the desired format
-  function generateFileTreeStructure(repoName, filePaths) {
-    if (!filePaths || filePaths.length === 0) return '';
-
-    // Sort paths to ensure consistent order
-    filePaths.sort();
-
-    // Build tree structure
-    const tree = {};
-    filePaths.forEach(path => {
-      // Split path into components
-      const parts = path.split('/');
-      let current = tree;
-
-      // Build tree structure
-      parts.forEach(part => {
-        if (!current[part]) {
-          current[part] = {};
-        }
-        current = current[part];
-      });
+  try {
+    state.tree = new Tree('#repo-tree', {
+      data: [rootNode],
+      closeDepth: 1,
+      loaded() {
+        document.querySelectorAll('#repo-tree .tree-node').forEach((el) => {
+          const data = this.getNodeById(el.dataset.id);
+          if (data?.attributes?.type) el.classList.add(data.attributes.type);
+        });
+        updateCopyBtn(this.selectedNodes);
+      },
+      onChange() {
+        updateCopyBtn(this.selectedNodes);
+      },
     });
 
-    // Generate the formatted tree string
-    return formatTree(repoName, tree);
+    switchView('tree');
+  } catch (err) {
+    console.error(err);
+    showError(err.message);
   }
+};
 
-  // Function to format the tree structure as a string
-  function formatTree(name, node, prefix = '', isLast = true) {
-    // Start with the root node
-    let result = `${prefix}${isLast ? '└── ' : '├── '}${name}${Object.keys(node).length > 0 ? '/' : ''}\n`;
+const copySelectedFiles = async () => {
+  if (!state.tree || !state.repo) return;
 
-    // Process children
-    const keys = Object.keys(node).sort((a, b) => {
-      // Directories (with children) come first, then files
-      const aIsDir = Object.keys(node[a]).length > 0;
-      const bIsDir = Object.keys(node[b]).length > 0;
+  const selected = state.tree.selectedNodes.filter((n) => n.attributes?.type === 'file');
+  const valid = selected.filter((n) => !isIgnored(n.id, state.ignoreRegex));
+  const ignored = selected.length - valid.length;
 
-      if (aIsDir && !bIsDir) return -1;
-      if (!aIsDir && bIsDir) return 1;
+  switchView('progress');
+  el.progressSpinner.style.display = '';
+  el.successIcon.style.display = 'none';
+  el.progressText.textContent = `Fetching ${valid.length} file contents...`;
 
-      // Alphabetical order within the same type
-      return a.localeCompare(b);
-    });
+  try {
+    const { includeFileTree = false } = await chrome.storage.sync.get('includeFileTree');
 
-    keys.forEach((key, index) => {
-      const isLastChild = index === keys.length - 1;
-      const newPrefix = prefix + (isLast ? '    ' : '│   ');
-      result += formatTree(key, node[key], newPrefix, isLastChild);
-    });
+    const contents = await Promise.all(
+      valid.map(async (n) => {
+        const text = await fetchFileContent(state.repo.owner, state.repo.name, n.id, state.repo.branch);
+        return `## File: ${n.id}\n\`\`\`\n${text}\n\`\`\``;
+      }),
+    );
 
-    return result;
+    let combined = contents.join('\n\n');
+
+    if (includeFileTree) {
+      const tree = asciiTree(valid.map((n) => n.id));
+      combined = `## File Tree Structure\n\n${tree}\n\n${combined}`;
+    }
+
+    await navigator.clipboard.writeText(combined);
+
+    showProgress(`Successfully copied ${valid.length} files to clipboard!${ignored ? ` (${ignored} ignored)` : ''}`, true);
+  } catch (err) {
+    console.error(err);
+    showProgress(err.message, false);
   }
+};
 
-}
+const showProgress = (message, success) => {
+  el.progressSpinner.style.display = 'none';
+  el.successIcon.textContent = success ? '✓' : '';
+  el.successIcon.style.display = success ? 'block' : 'none';
+  el.progressText.textContent = message;
 
-document.addEventListener('DOMContentLoaded', initializePopup);
+  const oldBtn = el.fetchProgress.querySelector('button');
+  if (oldBtn) oldBtn.remove();
+
+  const back = document.createElement('button');
+  back.textContent = 'Back to Tree';
+  back.className = 'btn btn-secondary';
+  back.style.marginTop = '16px';
+  back.addEventListener('click', () => switchView('tree'));
+  el.fetchProgress.appendChild(back);
+};
+
+const asciiTree = (paths) => {
+  if (!paths.length) return '';
+  paths.sort();
+  const root = {};
+
+  paths.forEach((p) => {
+    p.split('/').reduce((node, part) => {
+      node[part] = node[part] || {};
+      return node[part];
+    }, root);
+  });
+
+  const format = (node, prefix = '', last = true) => {
+    return Object.entries(node)
+      .sort(([aKey, aVal], [bKey, bVal]) => {
+        const aDir = Object.keys(aVal).length;
+        const bDir = Object.keys(bVal).length;
+        if (aDir && !bDir) return -1;
+        if (!aDir && bDir) return 1;
+        return aKey.localeCompare(bKey);
+      })
+      .map(([key, child], i, arr) => {
+        const isLast = i === arr.length - 1;
+        const line = `${prefix}${last ? '    ' : '│   '}${isLast ? '└──' : '├──'} ${key}${Object.keys(child).length ? '/' : ''}\n`;
+        return line + format(child, `${prefix}${last ? '    ' : '│   '}`, isLast);
+      })
+      .join('');
+  };
+
+  return `└── ${state.repo.name}/\n${format(root)}`;
+};
