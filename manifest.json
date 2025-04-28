@@ -3,6 +3,7 @@
   "name": "GitHub Prompter",
   "version": "1.0.1",
   "description": "Select files as LLM Ready Markdown from GitHub repositories",
+  "minimum_chrome_version": "120",
   "permissions": [
     "activeTab",
     "storage"

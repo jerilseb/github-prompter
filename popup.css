@@ -1,6 +1,7 @@
 :root {
   --border: 1px solid #e1e4e8;
   --bg-light: #fafbfc;
+  --primary-color: #19908e;
 }
 
 html,
@@ -103,12 +104,12 @@ button {
 
 .btn-primary {
   color: #fff;
-  background: #19908e;
+  background: var(--primary-color);
   border-color: rgba(27, 31, 35, 0.15);
 }
 
-.btn-primary:hover {
-  background: #138684;
+.btn-primary:enabled:hover {
+  background: color-mix(in srgb, var(--primary-color) 95%, black);
 }
 
 .btn-secondary {
