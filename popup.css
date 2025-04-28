@@ -67,14 +67,9 @@ body {
 }
 
 button {
-  padding: 5px 12px;
-  font-size: 12px;
-  font-weight: 500;
   border-radius: 6px;
   border: var(--border);
-  background: var(--bg-light);
   cursor: pointer;
-  transition: background-color 0.2s;
 }
 
 .icon-button {
@@ -108,12 +103,12 @@ button {
 
 .btn-primary {
   color: #fff;
-  background: #2ea44f;
+  background: #19908e;
   border-color: rgba(27, 31, 35, 0.15);
 }
 
 .btn-primary:hover {
-  background: #2c974b;
+  background: #138684;
 }
 
 .btn-secondary {
