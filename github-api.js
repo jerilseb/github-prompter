@@ -29,7 +29,7 @@ async function handleApiResponse(response) {
     }
     throw new Error(`Github API rate limit exceeded. To get increased access to public repositories or access private ones, add a GitHub Token in the Settings (⚙️).\n\n${waitMessage}`);
   } else if (response.status === 404) {
-    throw new Error('Repository not found. Check the URL or ensure you have access.');
+    throw new Error('Repository is Private. Github Token (⚙️) needs read permission on the repository');
   } else if (!response.ok) {
     throw new Error('Failed to fetch repository contents.');
   }
