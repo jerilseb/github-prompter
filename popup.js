@@ -162,8 +162,8 @@ const renderTree = (treeData) => {
   el.treeContainer.innerHTML = '<div id="repo-tree"></div>';
 
   const rootLabel = state.repo.subDir
-    ? `${state.repo.owner}/${state.repo.name}/${state.repo.subDir}`
-    : `${state.repo.owner}/${state.repo.name}`;
+    ? `.../${state.repo.subDir}`
+    : `${state.repo.name}`;
 
   const rootNode = {
     id: 'root',
