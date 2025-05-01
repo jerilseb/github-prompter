@@ -236,7 +236,7 @@ const copySelectedFiles = async () => {
 
 const showProgress = (message, success) => {
   el.progressSpinner.style.display = 'none';
-  el.successIcon.textContent = success ? '✔' : '';
+  el.successIcon.textContent = success ? '✓' : '';
   el.successIcon.style.display = success ? 'block' : 'none';
   el.progressText.textContent = message;
 
