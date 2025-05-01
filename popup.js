@@ -62,7 +62,7 @@ const loadRepository = async (url) => {
       owner,
       name: repo,
       branch: branchFromUrl || default_branch,
-      dir: (dirPath || '').replace(/\/$/, '') // strip trailing slash
+      subDir: (dirPath || '').replace(/\/$/, '') // strip trailing slash
     };
 
     const rawTree  = await fetchRepoTree(owner, repo, state.repo.branch);
@@ -71,8 +71,8 @@ const loadRepository = async (url) => {
     /* If the URL points inside a sub-directory, drill down so that
        the root of the displayed tree is exactly that directory. */
     let finalTreeData = treeData;
-    if (state.repo.dir) {
-      const parts = state.repo.dir.split('/');
+    if (state.repo.subDir) {
+      const parts = state.repo.subDir.split('/');
       let cursor = { children: treeData };
 
       for (const part of parts) {
@@ -161,8 +161,8 @@ const buildTree = (items = []) => {
 const renderTree = (treeData) => {
   el.treeContainer.innerHTML = '<div id="repo-tree"></div>';
 
-  const rootLabel = state.repo.dir
-    ? `${state.repo.owner}/${state.repo.name}/${state.repo.dir}`
+  const rootLabel = state.repo.subDir
+    ? `${state.repo.owner}/${state.repo.name}/${state.repo.subDir}`
     : `${state.repo.owner}/${state.repo.name}`;
 
   const rootNode = {
