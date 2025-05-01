@@ -1,3 +1,4 @@
 .repomix
 *.md
 !README.md
+*.patch

@@ -16,7 +16,7 @@ const el = {
 
 const state = {
   tree: null,        // Tree.js instance
-  repo: null,        // { owner, name, branch }
+  repo: null,        // { owner, name, branch, dir? }
   ignoreRegex: [],
 };
 
@@ -39,25 +39,54 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 const loadRepository = async (url) => {
   const [clean] = url.split(/[?#]/); // remove query/hash
-  const match = clean.match(/https:\/\/github\.com\/([^/]+)\/([^/]+)(?:\/tree\/([^/]+))?/);
+
+  /* Capture: owner, repo, branch, and (optionally) directory path */
+  const match = clean.match(
+    /https:\/\/github\.com\/([^/]+)\/([^/]+)(?:\/tree\/([^/]+)(?:\/(.+))?)?/
+  );
 
   if (!match) {
-    return showError('Not a valid GitHub repository URL. Please navigate to a repository page (e.g., https://github.com/owner/repo).');
+    return showError(
+      'Not a valid GitHub repository URL. Please navigate to a repository page (e.g., https://github.com/owner/repo).'
+    );
   }
 
-  const [, owner, repo, branchFromUrl] = match;
+  const [, owner, repo, branchFromUrl, dirPath] = match;
 
   switchView('loading');
   el.repoInfo.textContent = `${owner}/${repo}`;
 
   try {
     const { default_branch } = await fetchRepoInfo(owner, repo);
-    state.repo = { owner, name: repo, branch: branchFromUrl || default_branch };
+    state.repo = {
+      owner,
+      name: repo,
+      branch: branchFromUrl || default_branch,
+      dir: (dirPath || '').replace(/\/$/, '') // strip trailing slash
+    };
 
-    const rawTree = await fetchRepoTree(owner, repo, state.repo.branch);
+    const rawTree  = await fetchRepoTree(owner, repo, state.repo.branch);
     const treeData = buildTree(rawTree.tree);
 
-    renderTree(treeData);
+    /* If the URL points inside a sub-directory, drill down so that
+       the root of the displayed tree is exactly that directory. */
+    let finalTreeData = treeData;
+    if (state.repo.dir) {
+      const parts = state.repo.dir.split('/');
+      let cursor = { children: treeData };
+
+      for (const part of parts) {
+        cursor =
+          cursor.children.find(
+            (c) => c.text === part && c.attributes?.type === 'directory'
+          ) || null;
+        if (!cursor) break;
+      }
+      if (cursor?.children) finalTreeData = cursor.children;
+    }
+
+    renderTree(finalTreeData);
+
     el.repoInfo.textContent = `${owner}/${repo} (${state.repo.branch})`;
   } catch (err) {
     console.error(err);
@@ -132,9 +161,13 @@ const buildTree = (items = []) => {
 const renderTree = (treeData) => {
   el.treeContainer.innerHTML = '<div id="repo-tree"></div>';
 
+  const rootLabel = state.repo.dir
+    ? `${state.repo.owner}/${state.repo.name}/${state.repo.dir}`
+    : `${state.repo.owner}/${state.repo.name}`;
+
   const rootNode = {
     id: 'root',
-    text: `${state.repo.owner}/${state.repo.name}`,
+    text: rootLabel,
     ignored: false,
     children: treeData,
     attributes: { type: 'directory' },
@@ -203,7 +236,7 @@ const copySelectedFiles = async () => {
 
 const showProgress = (message, success) => {
   el.progressSpinner.style.display = 'none';
-  el.successIcon.textContent = success ? '✓' : '';
+  el.successIcon.textContent = success ? '✔' : '';
   el.successIcon.style.display = success ? 'block' : 'none';
   el.progressText.textContent = message;
 
