@@ -65,7 +65,7 @@ const loadRepository = async (url) => {
       subDir: (dirPath || '').replace(/\/$/, '') // strip trailing slash
     };
 
-    const rawTree  = await fetchRepoTree(owner, repo, state.repo.branch);
+    const rawTree = await fetchRepoTree(owner, repo, state.repo.branch);
     const treeData = buildTree(rawTree.tree);
 
     /* If the URL points inside a sub-directory, drill down so that
@@ -162,7 +162,7 @@ const renderTree = (treeData) => {
   el.treeContainer.innerHTML = '<div id="repo-tree"></div>';
 
   const rootLabel = state.repo.subDir
-    ? `.../${state.repo.subDir}`
+    ? `.../${state.repo.subDir.split('/').slice(-2).join('/')}`
     : `${state.repo.name}`;
 
   const rootNode = {
