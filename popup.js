@@ -1,5 +1,6 @@
 import { fetchRepoInfo, fetchRepoTree, fetchFileContent } from './github-api.js';
 import { parseIgnoreFile, isIgnored } from './ignore-utils.js';
+import Tree from './tree.js';
 
 const el = {
   treeContainer: document.getElementById('tree-container'),

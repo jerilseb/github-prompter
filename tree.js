@@ -1,16 +1,4 @@
 /**
- * Deep clones an object using JSON methods.
- * Note: This method has limitations (e.g., loses functions, Date objects become strings).
- * Functionality remains as in the original.
- * @param {object} obj - The object to clone.
- * @returns {object} The deeply cloned object.
- */
-function deepClone(obj) {
-  // Functionality kept identical as requested.
-  return JSON.parse(JSON.stringify(obj));
-}
-
-/**
  * Returns a new array with unique primitive values from the input array.
  * @param {Array<any>} arr - The input array.
  * @returns {Array<any>} A new array with unique values.
@@ -75,7 +63,6 @@ function collapseFromLeaf(tree, leafNode) {
   }
 }
 
-
 /**
  * Recursively expands nodes starting from a given root node.
  * @param {Tree} tree - The Tree instance.
@@ -98,7 +85,7 @@ function expandFromRoot(tree, node) {
 }
 
 
-class Tree {
+export default class Tree {
   // Default options as a static property or defined within constructor
   static defaultOptions = {
     values: [],
@@ -310,7 +297,6 @@ class Tree {
     }
   }
 
-
   // --- State Management ---
 
   /**
@@ -367,7 +353,6 @@ class Tree {
     }
     return selected;
   }
-
 
   markWillUpdateNode(node) {
     this.willUpdateNodesById[node.id] = node;
@@ -486,7 +471,7 @@ class Tree {
    * @returns {{treeNodes: Array, nodesById: object, leafNodesById: object, defaultValues: Array}}
    */
   static parseTreeData(data) {
-    const treeNodes = deepClone(data); // Deep clone to avoid modifying original data
+    const treeNodes = structuredClone(data);
     const nodesById = {};
     const leafNodesById = {};
     const defaultValues = [];
