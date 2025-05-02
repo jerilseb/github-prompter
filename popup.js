@@ -210,7 +210,11 @@ const copySelectedFiles = async () => {
   el.progressText.textContent = `Fetching ${valid.length} file contents...`;
 
   try {
-    const { includeFileTree = false } = await chrome.storage.sync.get('includeFileTree');
+    const {
+      includeFileTree = false,
+      customText = '',
+      customTextPosition = 'prepend' // Default to prepend
+    } = await chrome.storage.sync.get(['includeFileTree', 'customText', 'customTextPosition']);
 
     const contents = await Promise.all(
       valid.map(async (n) => {
@@ -224,6 +228,15 @@ const copySelectedFiles = async () => {
     if (includeFileTree) {
       const tree = asciiTree(valid.map((n) => n.id));
       combined = `## File Tree Structure\n\n${tree}\n\n${combined}`;
+    }
+
+    // Apply custom text based on position
+    if (customText) {
+      if (customTextPosition === 'prepend') {
+        combined = `${customText}\n\n${combined}`;
+      } else {
+        combined = `${combined}\n\n${customText}`;
+      }
     }
 
     await navigator.clipboard.writeText(combined);

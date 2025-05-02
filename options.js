@@ -1,11 +1,13 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   const tokenInput = document.getElementById('github-token');
   const ignorePatternsInput = document.getElementById('ignore-patterns');
   const saveButton = document.getElementById('save-settings');
   const removeButton = document.getElementById('remove-token');
   const statusMessage = document.getElementById('status-message');
-  const patInstructions = document.getElementById('pat-instructions');
   const includeFileTreeCheckbox = document.getElementById('include-file-tree');
+  const customTextInput = document.getElementById('custom-text');
+  const prependRadio = document.getElementById('prepend-text');
+  const appendRadio = document.getElementById('append-text');
 
   // Function to toggle clear button visibility
   function toggleClearButtonVisibility() {
@@ -17,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Load existing settings
-  chrome.storage.sync.get(['githubToken', 'ignorePatterns', 'includeFileTree'], function(result) {
+  chrome.storage.sync.get(['githubToken', 'ignorePatterns', 'includeFileTree', 'customText', 'customTextPosition'], function (result) {
     if (result.githubToken) {
       tokenInput.value = result.githubToken;
     }
@@ -25,6 +27,19 @@ document.addEventListener('DOMContentLoaded', function() {
       ignorePatternsInput.value = result.ignorePatterns;
     }
     includeFileTreeCheckbox.checked = result.includeFileTree || false;
+
+    // Load custom text settings
+    if (result.customText) {
+      customTextInput.value = result.customText;
+    }
+
+    // Set the position radio button
+    if (result.customTextPosition === 'append') {
+      appendRadio.checked = true;
+    } else {
+      prependRadio.checked = true; // Default to prepend
+    }
+
     // Set initial button visibility
     toggleClearButtonVisibility();
   });
@@ -33,13 +48,21 @@ document.addEventListener('DOMContentLoaded', function() {
   tokenInput.addEventListener('input', toggleClearButtonVisibility);
 
   // Save settings
-  saveButton.addEventListener('click', function() {
+  saveButton.addEventListener('click', function () {
     const token = tokenInput.value.trim();
     const ignorePatterns = ignorePatternsInput.value.trim();
     const includeFileTree = includeFileTreeCheckbox.checked;
+    const customText = customTextInput.value;
+    const customTextPosition = appendRadio.checked ? 'append' : 'prepend';
 
     // Save all settings
-    chrome.storage.sync.set({ githubToken: token, ignorePatterns: ignorePatterns, includeFileTree: includeFileTree }, function() {
+    chrome.storage.sync.set({
+      githubToken: token,
+      ignorePatterns: ignorePatterns,
+      includeFileTree: includeFileTree,
+      customText: customText,
+      customTextPosition: customTextPosition
+    }, function () {
       // Check for errors
       if (chrome.runtime.lastError) {
         showStatus(`Error saving settings: ${chrome.runtime.lastError.message}`, 'error');
@@ -50,9 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Remove token
-  removeButton.addEventListener('click', function() {
+  removeButton.addEventListener('click', function () {
     // We only remove the token, not the ignore patterns
-    chrome.storage.sync.remove('githubToken', function() {
+    chrome.storage.sync.remove('githubToken', function () {
       tokenInput.value = '';
       // Hide button after clearing
       toggleClearButtonVisibility();
@@ -70,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Add keyboard shortcut for saving (Ctrl+S or Cmd+S)
-  document.addEventListener('keydown', function(event) {
+  document.addEventListener('keydown', function (event) {
     if (event.ctrlKey && event.key === 's') {
       event.preventDefault(); // Prevent the browser's default save action
       saveButton.click(); // Trigger the save button click

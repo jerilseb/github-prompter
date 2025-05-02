@@ -202,3 +202,19 @@ summary {
   margin-right: 4px; 
   cursor: pointer;
 }
+
+.radio-label {
+  display: block;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.inline-radio {
+  display: inline-block;
+  margin-right: 20px;
+}
+
+.radio-label input[type="radio"] {
+  margin-right: 8px;
+  transform: scale(1.2);
+}
