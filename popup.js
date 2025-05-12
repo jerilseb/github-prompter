@@ -214,7 +214,10 @@ const copySelectedFiles = async () => {
 
     const contents = await Promise.all(
       valid.map(async (n) => {
-        const text = await fetchFileContent(state.repo.owner, state.repo.name, n.id, state.repo.branch);
+        let text = await fetchFileContent(state.repo.owner, state.repo.name, n.id, state.repo.branch);
+        if (n.id.endsWith('.md')) {
+          text = text.replace(/```/g, '~~~');
+        }
         return `## File: ${n.id}\n\`\`\`\n${text}\n\`\`\``;
       }),
     );
