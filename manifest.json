@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GitHub Prompter",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Select files as LLM Ready Markdown from GitHub repositories",
   "minimum_chrome_version": "120",
   "permissions": [
