@@ -13,6 +13,7 @@ const el = {
   progressSpinner: document.querySelector('#fetch-progress .spinner'),
   progressText: document.getElementById('fetch-progress-text'),
   successIcon: document.getElementById('success-icon'),
+  tokenEstimation: document.getElementById('token-estimation'),
 };
 
 const state = {
@@ -118,6 +119,21 @@ const updateCopyBtn = (selected) => {
 
   el.copyBtn.textContent = `Copy ${validFiles.length} File${validFiles.length !== 1 ? 's' : ''}${ignored ? ` (${ignored} ignored)` : ''}`;
   el.copyBtn.disabled = validFiles.length === 0;
+  
+  // Update token estimation
+  updateTokenEstimation(validFiles);
+};
+
+// Calculate and display token estimation based on file sizes
+const updateTokenEstimation = (validFiles) => {
+  // Calculate total size of valid files
+  const totalSizeInBytes = validFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+  
+  // Calculate estimated tokens (4 bytes = 1 token)
+  const estimatedTokens = Math.ceil(totalSizeInBytes / 4);
+  
+  // Update the display
+  el.tokenEstimation.textContent = `Estimated tokens: ${estimatedTokens.toLocaleString()}`;
 };
 
 const buildTree = (items = []) => {
@@ -125,7 +141,7 @@ const buildTree = (items = []) => {
 
   items.sort((a, b) => a.path.localeCompare(b.path));
 
-  items.forEach(({ path, type }) => {
+  items.forEach(({ path, type, size }) => {
     const parts = path.split('/');
     let node = root;
 
@@ -135,10 +151,14 @@ const buildTree = (items = []) => {
         id: fullPath,
         text: part,
         type: 'directory',
+        size: 0,
         children: {},
       };
 
-      if (i === parts.length - 1 && type === 'blob') node[part].type = 'file';
+      if (i === parts.length - 1 && type === 'blob') {
+        node[part].type = 'file';
+        node[part].size = size || 0;
+      }
       node = node[part].children;
     });
   });
@@ -147,6 +167,7 @@ const buildTree = (items = []) => {
     .map((item) => ({
       id: item.id,
       text: item.text,
+      size: item.size || 0,
       ignored: isIgnored(item.id, state.ignoreRegex),
       children: item.type === 'directory' ? toTreeData(item.children) : [],
       attributes: { type: item.type },

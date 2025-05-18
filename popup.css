@@ -37,6 +37,19 @@ body {
   flex-shrink: 0;
 }
 
+.file-actions-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.token-estimation {
+  font-size: 12px;
+  color: #586069;
+  text-align: center;
+  margin-top: 8px;
+}
+
 #tree-container {
   flex-grow: 1;
   overflow-y: auto;
