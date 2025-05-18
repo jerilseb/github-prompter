@@ -1,4 +1,5 @@
 .repomix
 *.md
 !README.md
+!AGENT.md
 *.patch
