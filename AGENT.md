@@ -8,6 +8,7 @@ GitHub Prompter is a Chrome extension that allows users to:
 - Browse GitHub repositories and select specific files
 - Copy selected files in Markdown format
 - Paste the formatted code directly into LLMs like ChatGPT, Claude, or Gemini
+- See estimated token count for selected files
 - Avoid manual copy-pasting or repository cloning when asking LLMs about code
 
 ## Architecture Overview
@@ -66,12 +67,14 @@ The main user interface that appears when clicking the extension icon:
 - Displays a tree view of repository files
 - Allows file selection
 - Provides copy functionality
+- Shows estimated token count for selected files
 - Shows loading states and error messages
 
 Key functions:
 - `loadRepository(url)`: Parses the current GitHub URL and loads the repository
 - `buildTree(items)`: Converts GitHub API data into a tree structure
 - `copySelectedFiles()`: Fetches and formats selected files for copying
+- `updateTokenEstimation(validFiles)`: Calculates and displays estimated token count
 
 ### 3. File Tree Visualization (`tree.js`, `tree.css`)
 
@@ -105,9 +108,10 @@ Allows users to configure:
 3. Extension fetches repository metadata and file tree from GitHub API
 4. File tree is rendered in the popup interface
 5. User selects files of interest
-6. When "Copy" is clicked, extension fetches content of selected files
-7. Files are formatted as Markdown with proper code blocks
-8. Formatted content is copied to clipboard for pasting into an LLM
+6. Extension calculates and displays estimated token count for selected files
+7. When "Copy" is clicked, extension fetches content of selected files
+8. Files are formatted as Markdown with proper code blocks
+9. Formatted content is copied to clipboard for pasting into an LLM
 
 ## Key Features
 
@@ -129,6 +133,11 @@ Allows users to configure:
    - Formats code with proper Markdown syntax
    - Optionally includes file tree structure
    - Ensures compatibility with LLMs
+
+5. **Token Estimation**
+   - Calculates estimated token count based on the size of selected files
+   - Updates dynamically as files are selected/deselected
+   - Helps users stay within LLM context limits
 
 ## Extension Permissions
 
