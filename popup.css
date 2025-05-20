@@ -56,8 +56,7 @@ body {
   padding: 8px;
 }
 
-.loading-indicator,
-.fetch-progress {
+.loading-indicator {
   flex-grow: 1;
   display: none;
   flex-direction: column;
@@ -65,6 +64,36 @@ body {
   align-items: center;
   text-align: center;
   padding: 20px;
+}
+
+.loading-indicator.overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 280px;
+  min-height: 120px;
+  padding: 32px 40px 28px;
+  gap: 10px;
+  z-index: 1001;
+}
+
+#loading-text {
+  margin-top: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  max-width: 95%;
+  color: #1a2a3a;
+  white-space: pre-line;
+}
+
+.action-container {
+  display: none;
+  justify-content: center;
+  margin-top: 16px;
+  width: 100%;
 }
 
 .output-container {
@@ -205,33 +234,11 @@ button {
   white-space: pre-line;
 }
 
-/* Progress overlay */
-.fetch-progress {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  min-width: 280px;
-  min-height: 120px;
-  padding: 32px 40px 28px;
-  gap: 10px;
-  z-index: 1001;
-}
+/* Success icon */
 
 #success-icon {
   display: none;
   font-size: 2.5em;
   color: #28a745;
   line-height: 1;
-}
-
-#fetch-progress-text {
-  margin-top: 5px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.4;
-  letter-spacing: 0.01em;
-  max-width: 95%;
-  color: #1a2a3a;
-  white-space: pre-line;
 }

@@ -5,14 +5,15 @@ import Tree from './tree.js';
 const el = {
   treeContainer: document.getElementById('tree-container'),
   loadingIndicator: document.getElementById('loading-indicator'),
+  spinner: document.querySelector('#loading-indicator .spinner'),
+  loadingText: document.getElementById('loading-text'),
+  successIcon: document.getElementById('success-icon'),
+  actionContainer: document.getElementById('action-container'),
+  backToTreeBtn: document.getElementById('back-to-tree-btn'),
   settingsBtn: document.getElementById('settings-btn'),
   repoInfo: document.getElementById('repo-info'),
   fileActions: document.getElementById('file-actions'),
   copyBtn: document.getElementById('copy-files-btn'),
-  fetchProgress: document.getElementById('fetch-progress'),
-  progressSpinner: document.querySelector('#fetch-progress .spinner'),
-  progressText: document.getElementById('fetch-progress-text'),
-  successIcon: document.getElementById('success-icon'),
   tokenEstimation: document.getElementById('token-estimation'),
 };
 
@@ -21,6 +22,56 @@ const state = {
   repo: null,        // { owner, name, branch, dir? }
   ignoreRegex: [],
 };
+
+/**
+ * Shows the loading indicator with configurable options
+ * @param {Object} options - Configuration options
+ * @param {string} options.text - Text to display
+ * @param {boolean} options.overlay - Whether to show as overlay
+ * @param {boolean} options.showSpinner - Whether to show the spinner
+ * @param {boolean} options.showSuccess - Whether to show success icon
+ */
+const showLoading = (options = {}) => {
+  const {
+    text = 'Loading...',
+    overlay = false,
+    showSpinner = true,
+    showSuccess = false
+  } = options;
+  
+  // Configure the loading indicator based on options
+  el.loadingText.textContent = text;
+  el.loadingIndicator.classList.toggle('overlay', overlay);
+  el.spinner.style.display = showSpinner ? '' : 'none';
+  
+  // Set success icon content and display
+  if (showSuccess) {
+    el.successIcon.textContent = '✓';
+    el.successIcon.style.display = 'block';
+  } else {
+    el.successIcon.style.display = 'none';
+  }
+  
+  // Show the loading indicator
+  switchView('loading');
+  
+  // Hide the action container when showing loading
+  el.actionContainer.style.display = 'none';
+};
+
+/**
+ * Shows or hides the action container with back button
+ * @param {boolean} showBackButton - Whether to show the back button
+ */
+const showActionContainer = (showBackButton = true) => {
+  if (showBackButton) {
+    el.backToTreeBtn.style.display = 'block';
+    el.actionContainer.style.display = 'flex';
+  } else {
+    el.actionContainer.style.display = 'none';
+  }
+};
+
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -32,6 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   el.settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
   el.copyBtn.addEventListener('click', copySelectedFiles);
+  el.backToTreeBtn.addEventListener('click', () => switchView('tree'));
 
   chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
     if (tab?.url) loadRepository(tab.url);
@@ -55,7 +107,10 @@ const loadRepository = async (url) => {
 
   const [, owner, repo, branchFromUrl, dirPath] = match;
 
-  switchView('loading');
+  showLoading({
+    text: 'Loading repository',
+    overlay: false
+  });
   el.repoInfo.textContent = `${owner}/${repo}`;
 
   try {
@@ -101,7 +156,6 @@ const switchView = (view) => {
   el.loadingIndicator.style.display = is('loading') ? 'flex' : 'none';
   el.treeContainer.style.display = is('tree') ? 'block' : 'none';
   el.fileActions.style.display = is('tree') ? 'flex' : 'none';
-  el.fetchProgress.style.display = is('progress') ? 'flex' : 'none';
 };
 
 const showError = (message) => {
@@ -225,10 +279,10 @@ const copySelectedFiles = async () => {
   const valid = selected.filter((n) => !isIgnored(n.id, state.ignoreRegex));
   const ignored = selected.length - valid.length;
 
-  switchView('progress');
-  el.progressSpinner.style.display = '';
-  el.successIcon.style.display = 'none';
-  el.progressText.textContent = `Fetching ${valid.length} file contents...`;
+  showLoading({
+    text: `Fetching ${valid.length} file contents...`,
+    overlay: true
+  });
 
   try {
     const { includeFileTree = false } = await chrome.storage.sync.get('includeFileTree');
@@ -260,20 +314,13 @@ const copySelectedFiles = async () => {
 };
 
 const showProgress = (message, success) => {
-  el.progressSpinner.style.display = 'none';
-  el.successIcon.textContent = success ? '✓' : '';
-  el.successIcon.style.display = success ? 'block' : 'none';
-  el.progressText.textContent = message;
-
-  const oldBtn = el.fetchProgress.querySelector('button');
-  if (oldBtn) oldBtn.remove();
-
-  const back = document.createElement('button');
-  back.textContent = 'Back to Tree';
-  back.className = 'btn btn-secondary';
-  back.style.marginTop = '16px';
-  back.addEventListener('click', () => switchView('tree'));
-  el.fetchProgress.appendChild(back);
+  showLoading({
+    text: message,
+    showSpinner: false,
+    showSuccess: success,
+    overlay: true
+  });
+  showActionContainer(true);
 };
 
 const asciiTree = (paths) => {

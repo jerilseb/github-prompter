@@ -37,16 +37,14 @@
 
   <section id="loading-indicator" style="display:none" class="loading-indicator">
     <div class="spinner"></div>
-    Loading repository
+    <span id="success-icon" style="display:none">✓</span>
+    <span id="loading-text">Loading...</span>
+    <div id="action-container" style="display:none" class="action-container">
+      <button id="back-to-tree-btn" class="btn btn-secondary">Back to Tree</button>
+    </div>
   </section>
-
+  
   <main id="tree-container"></main>
-
-  <section id="fetch-progress" style="display:none" class="fetch-progress">
-    <div class="spinner"></div>
-    <span id="success-icon"></span>
-    <span id="fetch-progress-text"></span>
-  </section>
 
   <script src="popup.js" type="module"></script>
 </body>
