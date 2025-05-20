@@ -104,6 +104,10 @@
         background-color: var(--bordercolor-ignored);
       }
     }
+
+    &.treejs-leaf-node {
+      padding-left: 20px;
+    }
   }
   
   .treejs-switcher {
