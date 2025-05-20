@@ -38,12 +38,12 @@ const showLoading = (options = {}) => {
     showSpinner = true,
     showSuccess = false
   } = options;
-  
+
   // Configure the loading indicator based on options
   el.loadingText.textContent = text;
   el.loadingIndicator.classList.toggle('overlay', overlay);
   el.spinner.style.display = showSpinner ? '' : 'none';
-  
+
   // Set success icon content and display
   if (showSuccess) {
     el.successIcon.textContent = '✓';
@@ -51,10 +51,10 @@ const showLoading = (options = {}) => {
   } else {
     el.successIcon.style.display = 'none';
   }
-  
+
   // Show the loading indicator
   switchView('loading');
-  
+
   // Hide the action container when showing loading
   el.actionContainer.style.display = 'none';
 };
@@ -74,25 +74,8 @@ const showActionContainer = (showBackButton = true) => {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const { ignorePatterns } = await chrome.storage.sync.get('ignorePatterns');
-    if (ignorePatterns) state.ignoreRegex = parseIgnoreFile(ignorePatterns);
-  } catch (err) {
-    console.error('Failed to load ignore patterns', err);
-  }
-
-  el.settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
-  el.copyBtn.addEventListener('click', copySelectedFiles);
-  el.backToTreeBtn.addEventListener('click', () => switchView('tree'));
-
-  chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-    if (tab?.url) loadRepository(tab.url);
-  });
-});
-
-
-const loadRepository = async (url) => {
-  const [clean] = url.split(/[?#]/); // remove query/hash
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [clean] = tab.url.split(/[?#]/); // remove query/hash
 
   /* Capture: owner, repo, branch, and (optionally) directory path */
   const match = clean.match(
@@ -101,16 +84,31 @@ const loadRepository = async (url) => {
 
   if (!match) {
     return showError(
-      'Not a valid GitHub repository URL. Please navigate to a repository page (e.g., https://github.com/owner/repo).'
+      'Not a GitHub repository URL. Please navigate to a repository page (e.g., https://github.com/owner/repo).'
     );
   }
-
   const [, owner, repo, branchFromUrl, dirPath] = match;
+
+  el.settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
+  el.copyBtn.addEventListener('click', copySelectedFiles);
+  el.backToTreeBtn.addEventListener('click', () => switchView('tree'));
+
+  loadRepository(owner, repo, branchFromUrl, dirPath);
+});
+
+const loadRepository = async (owner, repo, branchFromUrl, dirPath) => {
+  try {
+    const { ignorePatterns } = await chrome.storage.sync.get('ignorePatterns');
+    if (ignorePatterns) state.ignoreRegex = parseIgnoreFile(ignorePatterns);
+  } catch (err) {
+    console.error('Failed to load ignore patterns', err);
+  }
 
   showLoading({
     text: 'Loading repository',
     overlay: false
   });
+
   el.repoInfo.textContent = `${owner}/${repo}`;
 
   try {
@@ -173,7 +171,7 @@ const updateCopyBtn = (selected) => {
 
   el.copyBtn.textContent = `Copy ${validFiles.length} File${validFiles.length !== 1 ? 's' : ''}${ignored ? ` (${ignored} ignored)` : ''}`;
   el.copyBtn.disabled = validFiles.length === 0;
-  
+
   // Update token estimation
   updateTokenEstimation(validFiles);
 };
@@ -182,10 +180,10 @@ const updateCopyBtn = (selected) => {
 const updateTokenEstimation = (validFiles) => {
   // Calculate total size of valid files
   const totalSizeInBytes = validFiles.reduce((sum, file) => sum + (file.size || 0), 0);
-  
+
   // Calculate estimated tokens (4 bytes = 1 token)
   const estimatedTokens = Math.ceil(totalSizeInBytes / 4);
-  
+
   // Update the display
   el.tokenEstimation.textContent = `Estimated tokens: ${estimatedTokens.toLocaleString()}`;
 };
