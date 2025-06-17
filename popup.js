@@ -14,7 +14,9 @@ const el = {
   repoInfo: document.getElementById('repo-info'),
   fileActions: document.getElementById('file-actions'),
   copyBtn: document.getElementById('copy-files-btn'),
-  tokenEstimation: document.getElementById('token-estimation'),
+  selectedCount: document.getElementById('selected-count'),
+  ignoredCount: document.getElementById('ignored-count'),
+  tokenCount: document.getElementById('token-count'),
 };
 
 const state = {
@@ -169,8 +171,12 @@ const updateCopyBtn = (selected) => {
   const validFiles = files.filter((n) => !n.ignored);
   const ignored = files.length - validFiles.length;
 
-  el.copyBtn.textContent = `Copy ${validFiles.length} File${validFiles.length !== 1 ? 's' : ''}${ignored ? ` (${ignored} ignored)` : ''}`;
+  // Update button state
   el.copyBtn.disabled = validFiles.length === 0;
+
+  // Update individual stats
+  el.selectedCount.textContent = validFiles.length.toLocaleString();
+  el.ignoredCount.textContent = ignored.toLocaleString();
 
   // Update token estimation
   updateTokenEstimation(validFiles);
@@ -185,7 +191,7 @@ const updateTokenEstimation = (validFiles) => {
   const estimatedTokens = Math.ceil(totalSizeInBytes / 4);
 
   // Update the display
-  el.tokenEstimation.textContent = `Estimated tokens: ${estimatedTokens.toLocaleString()}`;
+  el.tokenCount.textContent = estimatedTokens.toLocaleString();
 };
 
 const buildTree = (items = []) => {

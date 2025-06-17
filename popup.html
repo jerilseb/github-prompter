@@ -26,12 +26,23 @@
 
   <section id="file-actions" class="file-actions" style="display:none">
     <div class="file-actions-container">
-      <button id="copy-files-btn" class="btn btn-primary" disabled>
-        Copy 0 Files
-      </button>
-      <div id="token-estimation" class="token-estimation">
-        Estimated tokens: 0
+      <div class="stats-container">
+        <div class="stat-item">
+          <div class="stat-label">Selected</div>
+          <div id="selected-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Ignored</div>
+          <div id="ignored-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Est. tokens</div>
+          <div id="token-count" class="stat-value">0</div>
+        </div>
       </div>
+      <button id="copy-files-btn" class="btn btn-primary" disabled>
+        Copy
+      </button>
     </div>
   </section>
 
