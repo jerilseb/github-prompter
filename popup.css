@@ -34,8 +34,8 @@ body {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 8px;
-  padding-bottom: 5px;
+  padding: 4px 10px;
+  padding-bottom: 4px;
   border-top: var(--border);
   border-bottom: var(--border);
   background: #f6f8fa;
