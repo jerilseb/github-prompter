@@ -199,6 +199,77 @@ summary {
 
 #include-file-tree {
   transform: scale(1.5) translateY(1px);
-  margin-right: 4px; 
+  margin-right: 4px;
   cursor: pointer;
+}
+
+/* Saved Repos Section */
+.saved-repos-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #334155;
+}
+
+.saved-repos-section summary {
+  font-weight: 500;
+  color: #e2e8f0;
+  padding: 8px 0;
+}
+
+.saved-repos-list {
+  margin-top: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.saved-repo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.saved-repo-item:last-child {
+  margin-bottom: 0;
+}
+
+.saved-repo-name {
+  font-size: 14px;
+  color: #e2e8f0;
+  font-family: monospace;
+}
+
+.saved-repo-files {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-left: 8px;
+}
+
+.delete-repo-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.delete-repo-btn:hover {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.no-repos-message {
+  color: #6b7280;
+  font-size: 14px;
+  text-align: center;
+  padding: 16px;
+  margin: 0;
 }

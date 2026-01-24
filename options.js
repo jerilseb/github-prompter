@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const statusMessage = document.getElementById('status-message');
   const patInstructions = document.getElementById('pat-instructions');
   const includeFileTreeCheckbox = document.getElementById('include-file-tree');
+  const savedReposList = document.getElementById('saved-repos-list');
+  const savedReposCount = document.getElementById('saved-repos-count');
 
   // Function to toggle clear button visibility
   function toggleClearButtonVisibility() {
@@ -76,4 +78,60 @@ document.addEventListener('DOMContentLoaded', function() {
       saveButton.click(); // Trigger the save button click
     }
   });
+
+  // Load and display saved repositories
+  loadSavedRepos();
+
+  function loadSavedRepos() {
+    chrome.storage.local.get(null, function(items) {
+      const savedRepos = [];
+
+      for (const key in items) {
+        if (key.startsWith('selections:')) {
+          const repoName = key.replace('selections:', '');
+          const fileCount = Array.isArray(items[key]) ? items[key].length : 0;
+          savedRepos.push({ key, repoName, fileCount });
+        }
+      }
+
+      savedReposCount.textContent = savedRepos.length;
+
+      if (savedRepos.length === 0) {
+        savedReposList.innerHTML = '<p class="no-repos-message">No saved selections yet.</p>';
+        return;
+      }
+
+      savedRepos.sort((a, b) => a.repoName.localeCompare(b.repoName));
+
+      savedReposList.innerHTML = savedRepos.map(repo => `
+        <div class="saved-repo-item" data-key="${repo.key}">
+          <div>
+            <span class="saved-repo-name">${repo.repoName}</span>
+            <span class="saved-repo-files">${repo.fileCount} file${repo.fileCount !== 1 ? 's' : ''}</span>
+          </div>
+          <button class="delete-repo-btn" title="Delete saved selection">&times;</button>
+        </div>
+      `).join('');
+
+      // Add delete handlers
+      savedReposList.querySelectorAll('.delete-repo-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const item = this.closest('.saved-repo-item');
+          const key = item.dataset.key;
+          deleteRepo(key);
+        });
+      });
+    });
+  }
+
+  function deleteRepo(key) {
+    chrome.storage.local.remove(key, function() {
+      if (chrome.runtime.lastError) {
+        showStatus(`Error deleting: ${chrome.runtime.lastError.message}`, 'error');
+      } else {
+        loadSavedRepos();
+        showStatus('Selection deleted.', 'success');
+      }
+    });
+  }
 }); 
