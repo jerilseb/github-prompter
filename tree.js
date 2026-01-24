@@ -147,8 +147,6 @@ export default class Tree {
   // --- Initialization and Rendering ---
 
   init(data) {
-    console.time('init');
-
     // Parse data using the static method
     const {
       treeNodes,
@@ -169,8 +167,6 @@ export default class Tree {
     if (initialValues.length) {
       this.values = initialValues; // Use the setter
     }
-
-    console.timeEnd('init');
   }
 
   render(treeNodes) {

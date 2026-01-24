@@ -81,7 +81,10 @@ async function fetchFileContent(owner, repo, path, branch) {
   const data = await handleApiResponse(response);
 
   try {
-    return atob(data.content);
+    // Decode base64 and handle UTF-8 properly
+    const binaryString = atob(data.content);
+    const bytes = Uint8Array.from(binaryString, char => char.charCodeAt(0));
+    return new TextDecoder('utf-8').decode(bytes);
   } catch (error) {
     console.error('Error decoding file content:', error);
     return null;
