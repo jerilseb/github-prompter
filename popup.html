@@ -26,9 +26,15 @@
 
   <section id="file-actions" class="file-actions" style="display:none">
     <div class="file-actions-container">
-      <button id="copy-files-btn" class="btn btn-primary" disabled>
-        Copy 0 Files
-      </button>
+      <div class="button-row">
+        <button id="copy-files-btn" class="btn btn-primary" disabled>
+          Copy 0 Files
+        </button>
+        <button id="remember-btn" class="btn btn-secondary tooltip" data-tooltip="Remember selection">
+          <img src="images/save-icon.svg" width="28" height="28" alt="Save">
+          <span class="tick-icon">✓</span>
+        </button>
+      </div>
       <div id="token-estimation" class="token-estimation">
         Estimated tokens: 0
       </div>

@@ -14,6 +14,7 @@ const el = {
   repoInfo: document.getElementById('repo-info'),
   fileActions: document.getElementById('file-actions'),
   copyBtn: document.getElementById('copy-files-btn'),
+  rememberBtn: document.getElementById('remember-btn'),
   tokenEstimation: document.getElementById('token-estimation'),
 };
 
@@ -22,6 +23,8 @@ const state = {
   repo: null,        // { owner, name, branch, dir? }
   ignoreRegex: [],
 };
+
+const getSelectionStorageKey = () => `selections:${state.repo.owner}/${state.repo.name}`;
 
 /**
  * Shows the loading indicator with configurable options
@@ -91,6 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   el.settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
   el.copyBtn.addEventListener('click', copySelectedFiles);
+  el.rememberBtn.addEventListener('click', rememberSelection);
   el.backToTreeBtn.addEventListener('click', () => switchView('tree'));
 
   loadRepository(owner, repo, branchFromUrl, dirPath);
@@ -257,6 +261,20 @@ const renderTree = (treeData) => {
           if (data?.attributes?.type) el.classList.add(data.attributes.type);
         });
         updateCopyBtn(this.selectedNodes);
+
+        // Restore saved selection for this repo
+        const storageKey = getSelectionStorageKey();
+        const tree = this;
+        chrome.storage.local.get(storageKey).then(result => {
+          const savedIds = result[storageKey];
+          if (savedIds?.length) {
+            // Filter to only files that still exist in the tree
+            const existingIds = savedIds.filter(id => tree.nodesById[id]);
+            if (existingIds.length) {
+              tree.values = existingIds;
+            }
+          }
+        });
       },
       onChange() {
         updateCopyBtn(this.selectedNodes);
@@ -309,6 +327,22 @@ const copySelectedFiles = async () => {
     console.error(err);
     showProgress(err.message, false);
   }
+};
+
+const rememberSelection = () => {
+  if (!state.tree || !state.repo) return;
+
+  const selected = state.tree.selectedNodes.filter((n) => n.attributes?.type === 'file');
+  const valid = selected.filter((n) => !isIgnored(n.id, state.ignoreRegex));
+
+  const storageKey = getSelectionStorageKey();
+  chrome.storage.local.set({ [storageKey]: valid.map(n => n.id) });
+
+  // Show tick for 1 second
+  el.rememberBtn.classList.add('saved');
+  setTimeout(() => {
+    el.rememberBtn.classList.remove('saved');
+  }, 1000);
 };
 
 const showProgress = (message, success) => {

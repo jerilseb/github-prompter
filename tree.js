@@ -167,6 +167,9 @@ export default class Tree {
     if (initialValues.length) {
       this.values = initialValues; // Use the setter
     }
+
+    // Call loaded callback if provided
+    this.options.loaded?.call(this);
   }
 
   render(treeNodes) {
