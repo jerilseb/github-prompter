@@ -56,6 +56,13 @@
 
     <details class="saved-repos-section">
       <summary>Saved Selections (<span id="saved-repos-count">0</span>)</summary>
+      <div class="saved-repos-toolbar">
+        <div class="saved-repos-actions">
+          <button id="export-selections" class="btn btn-secondary">Export</button>
+          <button id="import-selections" class="btn btn-primary">Import</button>
+          <input type="file" id="import-file-input" accept=".json,application/json" hidden>
+        </div>
+      </div>
       <div id="saved-repos-list" class="saved-repos-list">
         <p class="no-repos-message">No saved selections yet.</p>
       </div>

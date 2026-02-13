@@ -50,6 +50,15 @@ h2 {
   background-color: #2563eb;
 }
 
+.btn-secondary {
+  background-color: #334155;
+  color: #f1f5f9;
+}
+
+.btn-secondary:hover {
+  background-color: #475569;
+}
+
 .btn-danger {
   background-color: #ef4444;
   color: white;
@@ -222,6 +231,24 @@ summary {
   overflow-y: auto;
 }
 
+.saved-repos-toolbar {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #334155;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.saved-repos-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .saved-repo-item {
   display: flex;
   align-items: center;
@@ -272,4 +299,20 @@ summary {
   text-align: center;
   padding: 16px;
   margin: 0;
+}
+
+@media (max-width: 640px) {
+  .saved-repos-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .saved-repos-actions {
+    width: 100%;
+  }
+
+  .saved-repos-actions .btn {
+    flex: 1 1 auto;
+    margin: 0;
+  }
 }
