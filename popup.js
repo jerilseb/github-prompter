@@ -77,6 +77,8 @@ const showActionContainer = (showBackButton = true) => {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
+  el.settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
+
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const [clean] = tab.url.split(/[?#]/); // remove query/hash
 
@@ -92,7 +94,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   const [, owner, repo, branchFromUrl, dirPath] = match;
 
-  el.settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
   el.copyBtn.addEventListener('click', copySelectedFiles);
   el.rememberBtn.addEventListener('click', rememberSelection);
   el.backToTreeBtn.addEventListener('click', () => switchView('tree'));

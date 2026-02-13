@@ -118,13 +118,22 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', function() {
           const item = this.closest('.saved-repo-item');
           const key = item.dataset.key;
-          deleteRepo(key);
+          const repoName = item.querySelector('.saved-repo-name')?.textContent || key.replace('selections:', '');
+          deleteRepo(key, repoName);
         });
       });
     });
   }
 
-  function deleteRepo(key) {
+  function deleteRepo(key, repoName) {
+    const confirmed = window.confirm(
+      `Delete saved selection for "${repoName}"? This cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     chrome.storage.local.remove(key, function() {
       if (chrome.runtime.lastError) {
         showStatus(`Error deleting: ${chrome.runtime.lastError.message}`, 'error');
