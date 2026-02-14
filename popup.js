@@ -304,26 +304,36 @@ const copySelectedFiles = async () => {
   try {
     const { includeFileTree = false } = await chrome.storage.sync.get('includeFileTree');
 
-    const contents = await Promise.all(
+    const contentResults = await Promise.all(
       valid.map(async (n) => {
         let text = await fetchFileContent(state.repo.owner, state.repo.name, n.id, state.repo.branch);
+        if (typeof text !== 'string') return null;
         if (n.id.endsWith('.md')) {
           text = text.replace(/```/g, '~~~');
         }
-        return `## File: ${n.id}\n\`\`\`\n${text}\n\`\`\``;
+        return { path: n.id, content: `## File: ${n.id}\n\`\`\`\n${text}\n\`\`\`` };
       }),
     );
 
-    let combined = contents.join('\n\n');
+    const successfulContents = contentResults.filter(Boolean);
+    if (!successfulContents.length) {
+      throw new Error('Failed to decode selected file contents. Try removing binary files from your selection.');
+    }
+
+    const failedCount = valid.length - successfulContents.length;
+    let combined = successfulContents.map((item) => item.content).join('\n\n');
 
     if (includeFileTree) {
-      const tree = asciiTree(valid.map((n) => n.id));
+      const tree = asciiTree(successfulContents.map((item) => item.path));
       combined = `## File Tree Structure\n\n${tree}\n\n${combined}`;
     }
 
     await navigator.clipboard.writeText(combined);
 
-    showProgress(`Successfully copied ${valid.length} files to clipboard!${ignored ? ` (${ignored} ignored)` : ''}`, true);
+    showProgress(
+      `Successfully copied ${successfulContents.length} files to clipboard!${ignored ? ` (${ignored} ignored)` : ''}${failedCount ? ` (${failedCount} failed to decode)` : ''}`,
+      true,
+    );
   } catch (err) {
     console.error(err);
     showProgress(err.message, false);

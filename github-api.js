@@ -73,20 +73,41 @@ async function fetchRepoTree(owner, repo, branchOrCommitSha) {
 // Fetch file contents
 async function fetchFileContent(owner, repo, path, branch) {
   const options = await getFetchOptions();
+  const encodedPath = path
+    .split('/')
+    .map((part) => encodeURIComponent(part))
+    .join('/');
   const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`,
+    `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`,
     options
   );
 
   const data = await handleApiResponse(response);
 
   try {
-    // Decode base64 and handle UTF-8 properly
-    const binaryString = atob(data.content);
-    const bytes = Uint8Array.from(binaryString, char => char.charCodeAt(0));
-    return new TextDecoder('utf-8').decode(bytes);
+    if (data.encoding === 'base64' && typeof data.content === 'string') {
+      // GitHub may wrap base64 with newlines; atob requires sanitized input.
+      const normalized = data.content
+        .replace(/\s/g, '')
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+      const binaryString = atob(normalized);
+      const bytes = Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
+      return new TextDecoder('utf-8').decode(bytes);
+    }
+
+    // Fallback for cases where content is not inlined (e.g., larger files).
+    if (data.download_url) {
+      const rawResponse = await fetch(data.download_url, options);
+      if (!rawResponse.ok) {
+        throw new Error(`Failed to fetch raw file content for ${path}.`);
+      }
+      return rawResponse.text();
+    }
+
+    throw new Error(`Unsupported file encoding for ${path}: ${data.encoding || 'unknown'}`);
   } catch (error) {
-    console.error('Error decoding file content:', error);
+    console.error(`Error decoding file content for ${path}:`, error);
     return null;
   }
 }
